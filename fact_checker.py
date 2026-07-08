@@ -22,7 +22,7 @@ class FactChecker:
         embedding_api_key: str = "lm-studio",
         search_engine: str = "searxng",
         searxng_url: str = None,
-        output_language: str = "auto",
+        output_language: str = "en",
         search_config: dict = None,
     ):
         """
@@ -40,6 +40,9 @@ class FactChecker:
             embedding_api_key: API key for embedding service
             search_engine: Search engine to use ('duckduckgo' or 'searxng')
             searxng_url: Base URL for SearXNG instance
+            output_language: Output language for claims/verdicts. Hardcoded default
+                is "en" (English-only project requirement) instead of "auto", so the
+                app never auto-switches to another language based on input text.
         """
         self.api_base = api_base
         self.model = model
@@ -80,7 +83,10 @@ class FactChecker:
             searxng_url = os.getenv("SEARXNG_BASE_URL", "http://localhost:8090")
         self.searxng_url = searxng_url
 
-        # Language configuration
+        # Language configuration - always English for this project.
+        # NOTE: even if "auto" or some other value is passed in accidentally,
+        # _get_language_prompts() below only has an "en" prompt set left,
+        # so it will always fall back to English regardless.
         self.output_language = output_language
 
         # Search configuration
@@ -88,7 +94,10 @@ class FactChecker:
 
     def _detect_language(self, text: str) -> str:
         """
-        Simple language detection based on character patterns
+        Simple language detection based on character patterns.
+        Kept only for internal bookkeeping (e.g. tagging evidence chunks) -
+        no longer used to switch prompt/output language, since this project
+        is English-only.
         """
         # Check for Chinese characters
         chinese_chars = len(re.findall(r"[\u4e00-\u9fff]", text))
@@ -116,31 +125,13 @@ class FactChecker:
     def _get_language_prompts(self, target_lang: str) -> dict:
         """
         Get localized prompts for the specified language.
-        NOTE: The "zh" and "ja" entries below are intentional — they let the
-        AI respond in Chinese/Japanese when the input news is in that language.
-        This is a feature, not something that needs translating.
+
+        English-only project: only the "en" prompt set is defined. Any
+        target_lang value (including "zh"/"ja"/"ko"/"auto") falls back to
+        English via prompts.get(target_lang, prompts["en"]) below.
         """
 
         prompts = {
-            "zh": {
-                "extract_claim": """
-                你是一个精确的声明提取助手。分析提供的新闻并总结其核心思想。
-                将核心思想格式化为一个值得验证的陈述，即一个可以独立验证的声明。
-                输出格式：
-                claim: <声明>
-                """,
-                "evaluate_claim": """
-                你是事实核查助手。根据证据判断声明的真实性。请用中文回复。
-
-                格式要求：
-                VERDICT: TRUE/FALSE/PARTIALLY TRUE
-                REASONING: 你的中文推理过程
-
-                重要：请确保推理过程使用中文撰写。
-                """,
-                "user_extract": "从以下文本中提取关键的事实声明：",
-                "user_evaluate": "声明：{claim}\n\n证据：\n{evidence}\n\n请判断声明是否正确。",
-            },
             "en": {
                 "extract_claim": """
                 You are a precise claim extraction assistant. Your ONLY job is to restate
@@ -151,6 +142,10 @@ class FactChecker:
                 - Do NOT add corrections like "actually" or "but rather".
                 - Simply restate what the text is asserting, as a single verifiable statement,
                   preserving the original meaning exactly (including if it is false).
+                - You MUST write the restated claim in English, no matter what language the
+                  input text is written in. Translate the claim into English while preserving
+                  its exact meaning. Do NOT respond in Chinese, Japanese, Korean, or any other
+                  language under any circumstances.
 
                 output format:
                 claim: <claim>
@@ -158,39 +153,18 @@ class FactChecker:
                 "evaluate_claim": """
                 You are a fact-checking assistant. Judge if the claim is true based on evidence.
 
+                CRITICAL LANGUAGE RULE: You MUST write your entire response in English,
+                regardless of the language used in the claim or in the evidence provided
+                below. Even if the claim or evidence is in Chinese, Japanese, Korean, or
+                any other language, your VERDICT and REASONING must be written only in
+                English. Never switch to another language under any circumstances.
+
                 Format required:
                 VERDICT: TRUE/FALSE/PARTIALLY TRUE
-                REASONING: Your reasoning process
+                REASONING: Your reasoning process (in English only)
                 """,
                 "user_extract": "Extract the key factual claims from this text:",
                 "user_evaluate": "CLAIM: {claim}\n\nEVIDENCE:\n{evidence}",
-            },
-            "ja": {
-                "extract_claim": """
-                あなたは正確なクレーム抽出アシスタントです。提供されたニュースを分析し、その中心的なアイデアを要約してください。
-                中心的なアイデアを独立して検証可能なクレームとして形式化してください。
-                出力形式：
-                claim: <クレーム>
-                """,
-                "evaluate_claim": """
-                あなたは正確なファクトチェックアシスタントです。提供されたクレームを分析し、提供された証拠に基づいてその正確性を判定してください。
-
-                以下の手順に従ってください：
-                1. 各証拠を慎重に検討する
-                2. 証拠がクレームをどのように支持または反駁するかを評価する
-                3. 明確な判定を提供する：TRUE（真）、FALSE（偽）、またはPARTIALLY TRUE（部分的に真）
-                4. 具体的な証拠を引用して推論を説明する
-
-                以下の形式で回答してください：
-
-                VERDICT: [TRUE/FALSE/PARTIALLY TRUE]
-
-                REASONING: [具体的な証拠を引用した詳細な説明]
-
-                中立的で客観的であり、証拠が示すことのみに焦点を当ててください。提供された証拠を超えて推測しないでください。
-                """,
-                "user_extract": "このテキストから重要な事実のクレームを抽出してください：",
-                "user_evaluate": "クレーム：{claim}\n\n証拠：\n{evidence}",
             },
         }
 
@@ -367,14 +341,9 @@ class FactChecker:
         Returns:
             extracted claim
         """
-        # Get appropriate prompts based on user language setting
-        if self.output_language == "auto":
-            # Auto-detect based on input text
-            detected_lang = self._detect_language(text)
-            prompts = self._get_language_prompts(detected_lang)
-        else:
-            # Use user-configured language directly
-            prompts = self._get_language_prompts(self.output_language)
+        # English-only project: always use English prompts regardless of
+        # input text language or output_language setting.
+        prompts = self._get_language_prompts("en")
 
         try:
             response = self.client.chat.completions.create(
@@ -714,14 +683,8 @@ class FactChecker:
         Returns:
             Dictionary with verdict and reasoning
         """
-        # Get appropriate prompts based on user language setting
-        if self.output_language == "auto":
-            # Auto-detect based on claim text
-            detected_lang = self._detect_language(claim)
-            prompts = self._get_language_prompts(detected_lang)
-        else:
-            # Use user-configured language directly
-            prompts = self._get_language_prompts(self.output_language)
+        # English-only project: always use English prompts.
+        prompts = self._get_language_prompts("en")
 
         # Check if evidence chunks are available
         if not evidence_chunks:
@@ -781,24 +744,15 @@ class FactChecker:
                     "reasoning": f"The current model '{self.model}' returned an empty response. Try switching to a stronger model or check your API key/rate limits."
                 }
 
-            # Extract verdict and reasoning with more flexible patterns
+            # Extract verdict and reasoning
             verdict_match = re.search(
-                r"(?:VERDICT|判断|结论)[:：]\s*(TRUE|FALSE|PARTIALLY TRUE|正确|错误|部分正确|无法验证)",
+                r"VERDICT[:：]\s*(TRUE|FALSE|PARTIALLY TRUE)",
                 result_text,
                 re.IGNORECASE,
             )
 
             if verdict_match:
-                verdict_raw = verdict_match.group(1).upper()
-                # Map Chinese terms to English
-                if verdict_raw in ["正确", "TRUE"]:
-                    verdict = "TRUE"
-                elif verdict_raw in ["错误", "FALSE"]:
-                    verdict = "FALSE"
-                elif verdict_raw in ["部分正确", "PARTIALLY TRUE"]:
-                    verdict = "PARTIALLY TRUE"
-                else:
-                    verdict = "UNVERIFIABLE"
+                verdict = verdict_match.group(1).upper()
             else:
                 # Try to infer from content if no explicit verdict found
                 if "is true" in result_text.lower() or "supported" in result_text.lower():
@@ -809,7 +763,7 @@ class FactChecker:
                     verdict = "UNVERIFIABLE"
 
             reasoning_match = re.search(
-                r"(?:REASONING|推理过程|推理|分析)[:：]\s*(.*)",
+                r"REASONING[:：]\s*(.*)",
                 result_text,
                 re.DOTALL | re.IGNORECASE,
             )
