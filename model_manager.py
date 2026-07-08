@@ -64,13 +64,13 @@ class ModelManager:
 
     def _apply_user_config(self, base_config: Dict[str, Any]) -> Dict[str, Any]:
         """
-        应用用户配置到基础配置
+        Apply user configuration on top of the base configuration
 
         Args:
-            base_config: 基础配置
+            base_config: base configuration
 
         Returns:
-            应用用户配置后的配置
+            Configuration after applying user overrides
         """
         user_config_manager = get_user_config_manager()
         if not user_config_manager:
@@ -80,18 +80,18 @@ class ModelManager:
         if not user_config:
             return base_config
 
-        # 深度合并配置
+        # Deep merge configuration
         merged_config = base_config.copy()
 
-        # 应用用户模型配置
+        # Apply user model configuration
         if "model_config" in user_config:
             self._merge_config(merged_config, user_config["model_config"])
 
-        # 应用用户搜索配置
+        # Apply user search configuration
         if "search_config" in user_config:
             self._merge_config(merged_config, user_config["search_config"])
 
-        # 应用用户默认配置
+        # Apply user default configuration
         if "default_config" in user_config:
             self._merge_config(merged_config, user_config["default_config"])
 
@@ -99,11 +99,11 @@ class ModelManager:
 
     def _merge_config(self, base_config: Dict[str, Any], user_config: Dict[str, Any]):
         """
-        递归合并用户配置到基础配置
+        Recursively merge user configuration into base configuration
 
         Args:
-            base_config: 基础配置（会被修改）
-            user_config: 用户配置
+            base_config: base configuration (will be modified)
+            user_config: user configuration
         """
         for key, value in user_config.items():
             if (
@@ -117,49 +117,49 @@ class ModelManager:
 
     def save_user_model_config(self, model_config: Dict[str, Any]):
         """
-        保存用户模型配置
+        Save user model configuration
 
         Args:
-            model_config: 模型配置
+            model_config: model configuration
         """
         user_config_manager = get_user_config_manager()
         if user_config_manager:
             user_config_manager.save_model_config(model_config)
-            # 重新加载配置
+            # Reload configuration
             self.config = self._apply_user_config(self.base_config)
 
     def save_user_search_config(self, search_config: Dict[str, Any]):
         """
-        保存用户搜索配置
+        Save user search configuration
 
         Args:
-            search_config: 搜索配置
+            search_config: search configuration
         """
         user_config_manager = get_user_config_manager()
         if user_config_manager:
             user_config_manager.save_search_config(search_config)
-            # 重新加载配置
+            # Reload configuration
             self.config = self._apply_user_config(self.base_config)
 
     def save_user_defaults(self, defaults: Dict[str, Any]):
         """
-        保存用户默认配置
+        Save user default configuration
 
         Args:
-            defaults: 默认配置
+            defaults: default configuration
         """
         user_config_manager = get_user_config_manager()
         if user_config_manager:
             user_config_manager.save_default_config(defaults)
-            # 重新加载配置
+            # Reload configuration
             self.config = self._apply_user_config(self.base_config)
 
     def reset_user_config(self):
-        """重置用户配置"""
+        """Reset user configuration"""
         user_config_manager = get_user_config_manager()
         if user_config_manager:
             user_config_manager.reset_config()
-            # 重新加载配置
+            # Reload configuration
             self.config = self._apply_user_config(self.base_config)
 
     def get_llm_client(self, provider: str = None) -> OpenAI:
@@ -262,11 +262,11 @@ class ModelManager:
         self, provider: str, base_url: str, api_key: str = "EMPTY", timeout: int = 5
     ) -> List[str]:
         """
-        从API端点动态获取模型列表
-        支持OpenAI兼容的/models接口
+        Dynamically fetch model list from an API endpoint.
+        Supports the OpenAI-compatible /models endpoint.
         """
         try:
-            # 确保URL格式正确
+            # Make sure the URL format is correct
             if not base_url.endswith("/"):
                 base_url += "/"
             if base_url.endswith("/v1/"):
@@ -285,72 +285,73 @@ class ModelManager:
 
             if response.status_code == 200:
                 data = response.json()
-                # OpenAI格式: {"data": [{"id": "model_name"}, ...]}
+                # OpenAI format: {"data": [{"id": "model_name"}, ...]}
                 if "data" in data:
                     return [model["id"] for model in data["data"]]
-                # 简单格式: ["model1", "model2", ...]
+                # Simple format: ["model1", "model2", ...]
                 elif isinstance(data, list):
                     return data
-                # Ollama格式: {"models": [{"name": "model_name"}, ...]}
+                # Ollama format: {"models": [{"name": "model_name"}, ...]}
                 elif "models" in data:
                     return [model["name"] for model in data["models"]]
                 else:
                     return []
             else:
                 st.warning(
-                    f"API请求失败 (状态码: {response.status_code}): {models_url}"
+                    f"API request failed (status code: {response.status_code}): {models_url}"
                 )
                 return []
 
         except requests.exceptions.Timeout:
-            st.warning(f"API请求超时: {base_url}")
+            st.warning(f"API request timed out: {base_url}")
             return []
         except requests.exceptions.ConnectionError:
-            st.warning(f"无法连接到API: {base_url}")
+            st.warning(f"Could not connect to API: {base_url}")
             return []
         except Exception as e:
-            st.warning(f"获取模型列表失败: {str(e)}")
+            st.warning(f"Failed to fetch model list: {str(e)}")
             return []
 
     def get_dynamic_models(
         self, provider: str, custom_base_url: Optional[str] = None
     ) -> List[str]:
         """
-        获取指定提供商的可用模型列表
-        优先从API动态获取，失败则使用配置文件中的静态列表
+        Get the list of available models for the specified provider.
+        Tries to fetch dynamically from the API first, falls back to the
+        static list in the config file if that fails.
         """
         provider_config = self.config.get("providers", {}).get(provider, {})
         if not provider_config:
             return []
 
-        # 使用自定义URL或配置中的URL
+        # Use custom URL or the one from config
         base_url = custom_base_url or provider_config.get("base_url", "")
         api_key = provider_config.get("api_key", "EMPTY")
 
-        # 处理环境变量
+        # Handle environment variables
         if api_key.startswith("${") and api_key.endswith("}"):
             env_var = api_key[2:-1]
             api_key = os.getenv(env_var, "EMPTY")
 
-        # 尝试从API获取模型列表
+        # Try to fetch model list from API
         api_models = self.get_models_from_api(provider, base_url, api_key)
 
         if api_models:
             return api_models
 
-        # API获取失败，使用配置文件中的静态模型列表
+        # API fetch failed, use static model list from config file
         static_models = self.get_available_models(provider)
         if static_models:
-            st.info(f"使用配置文件中的静态模型列表 (共{len(static_models)}个模型)")
+            st.info(f"Using static model list from config file ({len(static_models)} models)")
             return static_models
 
         return []
 
-    # 注意：create_model_selection_ui 方法已移除
-    # 现在使用 app.py 中的启动时配置向导替代
+    # Note: create_model_selection_ui method has been removed
+    # Now replaced by the startup config wizard in app.py
 
     def test_connection(self, base_url: str, api_key: str = "EMPTY") -> bool:
-        """测试与API的连接"""
+        """Test connection to the API"""
         try:
             models = self.get_models_from_api("test", base_url, api_key, timeout=3)
             return len(models) > 0
@@ -359,7 +360,7 @@ class ModelManager:
 
     def get_available_embedding_providers(self) -> List[str]:
         """Get list of available embedding providers."""
-        return self.get_available_providers()  # 现在统一使用providers
+        return self.get_available_providers()  # Now unified under providers
 
     def get_search_providers(self) -> List[str]:
         """Get list of available search providers."""

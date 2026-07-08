@@ -1,5 +1,45 @@
 {
   "providers": {
+    "groq": {
+      "name": "Groq",
+      "type": "openai_compatible",
+      "base_url": "https://api.groq.com/openai/v1",
+      "api_key": "${GROQ_API_KEY:-}",
+      "models": {
+        "llama-3.3-70b-versatile": {
+          "name": "Llama 3.3 70B Versatile",
+          "type": "chat",
+          "max_tokens": 8192,
+          "supports_streaming": true
+        },
+        "llama-3.1-8b-instant": {
+          "name": "Llama 3.1 8B Instant",
+          "type": "chat",
+          "max_tokens": 8192,
+          "supports_streaming": true
+        },
+        "openai/gpt-oss-120b": {
+          "name": "GPT-OSS 120B (via Groq)",
+          "type": "chat",
+          "max_tokens": 8192,
+          "supports_streaming": true
+        }
+      }
+    },
+    "gemini": {
+      "name": "Google Gemini",
+      "type": "openai_compatible",
+      "base_url": "https://generativelanguage.googleapis.com/v1beta/openai/",
+      "api_key": "${GEMINI_API_KEY:-}",
+      "models": {
+        "gemini-embedding-001": {
+          "name": "Gemini Embedding 001",
+          "type": "embedding",
+          "max_tokens": 2048,
+          "dimensions": 768
+        }
+      }
+    },
     "openai": {
       "name": "OpenAI",
       "type": "openai_compatible",
@@ -51,36 +91,6 @@
         }
       }
     },
-    "ollama": {
-      "name": "Ollama",
-      "type": "openai_compatible",
-      "base_url": "${OLLAMA_BASE_URL:-http://localhost:11434}",
-      "api_key": "ollama",
-      "models": {
-        "gpt-oss:120b-cloud": {
-          "name": "GPT-OSS 120B Cloud",
-          "type": "chat",
-          "max_tokens": 8192,
-          "supports_streaming": true
-        },
-        "llama3.1": {
-          "name": "Llama 3.1",
-          "max_tokens": 8192,
-          "supports_streaming": true
-        },
-        "qwen2.5": {
-          "name": "Qwen 2.5",
-          "max_tokens": 8192,
-          "supports_streaming": true
-        },
-        "nomic-embed-text:latest": {
-          "name": "Nomic Embed Text",
-          "type": "embedding",
-          "max_tokens": 8192,
-          "dimensions": 768
-        }
-      }
-    },
     "local_api": {
       "name": "Local API Server",
       "type": "openai_compatible",
@@ -125,7 +135,7 @@
     "duckduckgo": {
       "name": "DuckDuckGo",
       "type": "duckduckgo",
-      "proxy": "socks5://127.0.0.1:20170",
+      "proxy": null,
       "timeout": 60,
       "max_results": 5,
       "enabled": true
@@ -141,36 +151,24 @@
     }
   },
   "defaults": {
-    "llm_provider": "ollama",
-    "llm_model": "gpt-oss:120b-cloud",
-    "embedding_provider": "ollama",
-    "embedding_model": "nomic-embed-text:latest",
-    "search_provider": "searxng",
+    "llm_provider": "groq",
+    "llm_model": "llama-3.3-70b-versatile",
+    "embedding_provider": "gemini",
+    "embedding_model": "gemini-embedding-001",
+    "search_provider": "duckduckgo",
     "temperature": 0.0,
     "max_tokens": 2000,
-    "output_language": "zh",
+    "output_language": "en",
     "evidence_display_multiplier": 2.5
   },
   "languages": {
     "auto": {
-      "name": "Auto Detect (自动检测)",
+      "name": "Auto Detect",
       "code": "auto"
-    },
-    "zh": {
-      "name": "中文 (Chinese)",
-      "code": "zh"
     },
     "en": {
       "name": "English",
       "code": "en"
-    },
-    "ja": {
-      "name": "日本語 (Japanese)",
-      "code": "ja"
-    },
-    "ko": {
-      "name": "한국어 (Korean)",
-      "code": "ko"
     }
   }
 }

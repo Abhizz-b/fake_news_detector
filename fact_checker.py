@@ -4,7 +4,7 @@ from typing import Dict, List, Tuple, Any
 import streamlit as st
 from openai import OpenAI
 import requests
-from duckduckgo_search import DDGS
+from ddgs import DDGS
 import numpy as np
 import re
 
@@ -16,6 +16,7 @@ class FactChecker:
         model: str,
         temperature: float,
         max_tokens: int,
+        api_key: str = "EMPTY",
         embedding_base_url: str = None,
         embedding_model: str = "text-embedding-nomic-embed-text-v1.5",
         embedding_api_key: str = "lm-studio",
@@ -32,6 +33,8 @@ class FactChecker:
             model: The model to use for fact checking
             temperature: Temperature parameter for LLM
             max_tokens: Maximum tokens for LLM response
+            api_key: API key for the chat/LLM provider (e.g. Groq key). Defaults to
+                "EMPTY" for local setups (Ollama/LM Studio) that don't need real auth.
             embedding_base_url: The base URL for embedding API
             embedding_model: The embedding model name
             embedding_api_key: API key for embedding service
@@ -42,7 +45,7 @@ class FactChecker:
         self.model = model
         self.temperature = temperature
         self.max_tokens = max_tokens
-        self.openai_api_key = "EMPTY"  # Placeholder for local setup
+        self.openai_api_key = api_key or "EMPTY"
 
         # Initialize the OpenAI client with local settings
         self.client = OpenAI(
@@ -51,7 +54,7 @@ class FactChecker:
         )
 
         # Initialize embedding client for online API
-        # 如果没有提供地址，使用环境变量或默认localhost
+        # If no address provided, use environment variable or default to localhost
         if embedding_base_url is None:
             import os
             embedding_base_url = os.getenv("LMSTUDIO_BASE_URL", "http://localhost:11435/v1")
@@ -71,7 +74,7 @@ class FactChecker:
 
         # Search engine configuration
         self.search_engine = search_engine
-        # 如果没有提供SearXNG地址，使用环境变量或默认localhost
+        # If no SearXNG address provided, use environment variable or default to localhost
         if searxng_url is None:
             import os
             searxng_url = os.getenv("SEARXNG_BASE_URL", "http://localhost:8090")
@@ -112,7 +115,10 @@ class FactChecker:
 
     def _get_language_prompts(self, target_lang: str) -> dict:
         """
-        Get localized prompts for the specified language
+        Get localized prompts for the specified language.
+        NOTE: The "zh" and "ja" entries below are intentional — they let the
+        AI respond in Chinese/Japanese when the input news is in that language.
+        This is a feature, not something that needs translating.
         """
 
         prompts = {
@@ -137,8 +143,15 @@ class FactChecker:
             },
             "en": {
                 "extract_claim": """
-                You are a precise claim extraction assistant. Analyze the provided news and summarize the central idea of it.
-                Format the central idea as a worthy-check statement, which is a claim that can be verified independently.
+                You are a precise claim extraction assistant. Your ONLY job is to restate
+                the exact factual claim made in the input text, exactly as it is asserted.
+
+                CRITICAL RULES:
+                - Do NOT judge, verify, fix, or negate the claim, even if you believe it is false.
+                - Do NOT add corrections like "actually" or "but rather".
+                - Simply restate what the text is asserting, as a single verifiable statement,
+                  preserving the original meaning exactly (including if it is false).
+
                 output format:
                 claim: <claim>
                 """,
@@ -414,14 +427,14 @@ class FactChecker:
         """
         # Multi-language search to avoid language bias
         progress_placeholder = st.empty()
-        progress_placeholder.info("🌍 执行多语言搜索以获取全面的证据...")
+        progress_placeholder.info("🌍 Running multi-language search to gather comprehensive evidence...")
 
-        # Define target languages for search
-        search_languages = ['en', 'zh', 'ja']  # English, Chinese, Japanese
+        # Define target languages for search (English only, per project requirements)
+        search_languages = ['en']
 
         # Translate claim to multiple languages
         translations = self._translate_claim(claim, search_languages)
-        progress_placeholder.success(f"✅ 已翻译到 {len(translations)} 种语言进行搜索")
+        progress_placeholder.success(f"✅ Translated into {len(translations)} languages for search")
 
         # Auto-clear after 2 seconds
         import time
@@ -437,7 +450,7 @@ class FactChecker:
             try:
                 # Show current search progress
                 with search_progress.container():
-                    st.info(f"🔍 搜索语言: {lang_code} - {translated_claim[:50]}...")
+                    st.info(f"🔍 Searching language: {lang_code} - {translated_claim[:50]}...")
 
                 # Search with translated claim
                 if self.search_engine == "searxng":
@@ -456,11 +469,11 @@ class FactChecker:
 
                 # Update progress
                 with search_progress.container():
-                    st.success(f"✅ {lang_code}: 找到 {len(evidence_docs)} 条证据")
+                    st.success(f"✅ {lang_code}: found {len(evidence_docs)} pieces of evidence")
 
             except Exception as e:
                 with search_progress.container():
-                    st.warning(f"⚠️ {lang_code} 搜索失败: {str(e)}")
+                    st.warning(f"⚠️ {lang_code} search failed: {str(e)}")
                 continue
 
         # Remove duplicates based on URL
@@ -476,7 +489,7 @@ class FactChecker:
 
         # Brief final summary that will be cleared by the calling function
         final_status = st.empty()
-        final_status.success(f"🎯 多语言搜索完成，共获得 {len(unique_evidence)} 条独特证据")
+        final_status.success(f"🎯 Multi-language search complete, {len(unique_evidence)} unique pieces of evidence found")
 
         # Auto-clear final status after 2 seconds
         time.sleep(2)
@@ -532,9 +545,6 @@ class FactChecker:
         Search using DuckDuckGo (fallback method).
         """
         try:
-            headers = {
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
-            }
             # Use proxy from search configuration if available
             proxy_setting = None
             if hasattr(self, 'search_config') and 'proxy' in self.search_config:
@@ -542,8 +552,10 @@ class FactChecker:
 
             # Get timeout from config
             timeout_setting = self.search_config.get('timeout', 60)
-            ddgs = DDGS(proxy=proxy_setting, timeout=timeout_setting, headers=headers)
-            results = list(ddgs.text(query, max_results=num_results))
+            ddgs = DDGS(proxy=proxy_setting, timeout=timeout_setting)
+            results = list(
+                ddgs.text(query, region="us-en", max_results=num_results)
+            )
 
             evidence_docs = []
             for result in results:
@@ -570,7 +582,7 @@ class FactChecker:
         top_k: int = 10,
     ) -> List[Dict[str, Any]]:
         """
-        Extract and rank evidence chunks related to the claim using BGE-M3.
+        Extract and rank evidence chunks related to the claim using embeddings.
 
         Args:
             evidence_docs: List of evidence documents
@@ -586,6 +598,15 @@ class FactChecker:
             return [
                 {
                     "text": "Evidence ranking unavailable - Embedding API not available.",
+                    "source": "System",
+                    "similarity": 0.0,
+                }
+            ]
+
+        if not evidence_docs:
+            return [
+                {
+                    "text": "No evidence was found for this claim (search returned no results).",
                     "source": "System",
                     "similarity": 0.0,
                 }
@@ -707,7 +728,7 @@ class FactChecker:
             st.warning("No evidence found for evaluation. Returning unverifiable verdict.")
             return {
                 "verdict": "UNVERIFIABLE",
-                "reasoning": "无法找到相关证据进行核查。"
+                "reasoning": "Could not find relevant evidence to fact-check this claim."
             }
 
         # Prepare evidence text for the prompt
@@ -750,14 +771,14 @@ class FactChecker:
 
             # Handle empty response
             if not result_text or result_text.strip() == "":
-                st.error("⚠️ 模型返回空响应！")
-                st.info("🔧 建议解决方案：")
-                st.info("1. 切换到更强的模型（如 gemma-3-270m-it 或 GPT 模型）")
-                st.info("2. 检查模型是否正确加载在 LM Studio 中")
-                st.info("3. 尝试降低输入文本长度")
+                st.error("⚠️ The model returned an empty response!")
+                st.info("🔧 Suggested fixes:")
+                st.info("1. Switch to a stronger model (e.g. llama-3.3-70b-versatile)")
+                st.info("2. Check that your Groq API key is valid and not rate-limited")
+                st.info("3. Try reducing the length of the input text")
                 return {
                     "verdict": "UNVERIFIABLE",
-                    "reasoning": f"当前模型 '{self.model}' 返回空响应。建议切换到更强的模型（如 gemma-3-270m-it）或检查 LM Studio 模型加载状态。"
+                    "reasoning": f"The current model '{self.model}' returned an empty response. Try switching to a stronger model or check your API key/rate limits."
                 }
 
             # Extract verdict and reasoning with more flexible patterns

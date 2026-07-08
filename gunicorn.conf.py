@@ -1,24 +1,24 @@
 #!/bin/bash
-# gunicorn配置文件
+# Gunicorn configuration file
 
-# 基本配置
+# Basic configuration
 bind = "0.0.0.0:8080"
-workers = 4  # 通常为CPU核心数的2-4倍
+workers = 4  # Usually 2-4x the number of CPU cores
 worker_class = "uvicorn.workers.UvicornWorker"
 keepalive = 120
 timeout = 120
 
-# 日志配置
+# Logging configuration
 accesslog = "access.log"
 errorlog = "error.log"
 loglevel = "info"
 
-# 重启配置
+# Restart configuration
 max_requests = 1000
 max_requests_jitter = 50
 
-# 进程名称
+# Process name
 proc_name = "fact_checker_api"
 
-# 预加载应用，减少每个worker的启动时间
+# Preload the app to reduce startup time per worker
 preload_app = True

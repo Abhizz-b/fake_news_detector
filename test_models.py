@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-测试脚本用于验证不同模型平台的配置和调用
+Test script for verifying configuration and calls of different model platforms
 """
 
 import json
@@ -10,15 +10,15 @@ from model_manager import model_manager
 
 
 def test_llm_provider(provider: str, model: str):
-    """测试LLM提供商"""
-    print(f"\n测试 LLM Provider: {provider}, Model: {model}")
+    """Test LLM provider"""
+    print(f"\nTesting LLM Provider: {provider}, Model: {model}")
     print("=" * 50)
 
     try:
         client = model_manager.get_llm_client(provider)
-        print(f"✓ LLM 客户端初始化成功")
+        print(f"✓ LLM client initialized successfully")
 
-        # 测试简单的对话
+        # Test simple conversation
         response = client.chat.completions.create(
             model=model,
             messages=[
@@ -33,22 +33,22 @@ def test_llm_provider(provider: str, model: str):
         )
 
         result = response.choices[0].message.content
-        print(f"✓ LLM 调用成功: {result}")
+        print(f"✓ LLM call successful: {result}")
 
     except Exception as e:
-        print(f"✗ LLM 测试失败: {e}")
+        print(f"✗ LLM test failed: {e}")
 
 
 def test_embedding_provider(provider: str):
-    """测试嵌入模型提供商"""
-    print(f"\n测试 Embedding Provider: {provider}")
+    """Test embedding model provider"""
+    print(f"\nTesting Embedding Provider: {provider}")
     print("=" * 50)
 
     try:
         model = model_manager.get_embedding_model(provider)
-        print(f"✓ 嵌入模型初始化成功")
+        print(f"✓ Embedding model initialized successfully")
 
-        # 测试嵌入生成
+        # Test embedding generation
         test_text = "This is a test sentence for embedding."
         embedding = model.encode(test_text)
 
@@ -56,45 +56,45 @@ def test_embedding_provider(provider: str):
             embedding = embedding["dense_vecs"]
 
         print(
-            f"✓ 嵌入生成成功，维度: {len(embedding) if hasattr(embedding, '__len__') else 'N/A'}"
+            f"✓ Embedding generated successfully, dimension: {len(embedding) if hasattr(embedding, '__len__') else 'N/A'}"
         )
 
     except Exception as e:
-        print(f"✗ 嵌入模型测试失败: {e}")
+        print(f"✗ Embedding model test failed: {e}")
 
 
 def print_available_providers():
-    """打印可用的提供商"""
-    print("\n可用的 LLM 提供商:")
+    """Print available providers"""
+    print("\nAvailable LLM providers:")
     for provider in model_manager.get_available_providers():
         models = model_manager.get_available_models(provider)
         print(f"  - {provider}: {models}")
 
-    print("\n可用的嵌入模型提供商:")
+    print("\nAvailable embedding model providers:")
     for provider in model_manager.get_available_embedding_providers():
         print(f"  - {provider}")
 
 
 def main():
-    """主函数"""
-    print("模型管理器测试脚本")
+    """Main function"""
+    print("Model Manager Test Script")
     print("=" * 50)
 
-    # 打印配置信息
+    # Print configuration info
     print_available_providers()
 
-    # 打印默认配置
+    # Print default configuration
     defaults = model_manager.get_default_config()
-    print(f"\n默认配置: {defaults}")
+    print(f"\nDefault configuration: {defaults}")
 
-    # 测试各个提供商
+    # Test each provider
     test_cases = [
-        # LLM 测试
+        # LLM tests
         ("local_api", "qwen2.5-14b-instruct"),
         ("lmstudio", "gemma-3-270m-it"),
         ("ollama", "llama3.1"),
         ("openai", "gpt-3.5-turbo"),
-        # 嵌入模型测试
+        # Embedding model tests
         ("bge_m3_local", None),
         ("lmstudio_embeddings", None),
         ("openai_embeddings", None),
@@ -107,7 +107,7 @@ def main():
         else:
             test_embedding_provider(provider)
 
-    print("\n测试完成!")
+    print("\nTest completed!")
 
 
 if __name__ == "__main__":
