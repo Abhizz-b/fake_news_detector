@@ -34,6 +34,13 @@ def render_sidebar(active_page: str, username: str):
     Streamlit version/DOM structure), the button silently lost its style
     and became invisible/undiscoverable. Now the button is guaranteed to
     render somewhere sensible even with zero custom CSS applied.
+
+    FIX 2: collapse button and expand button now use matching chevron
+    glyphs ("«" collapses, "»" expands) instead of two visually unrelated
+    icons ("⟨⟨" vs "☰"). Combined with the shared CSS rule in styles.py
+    (`.st-key-sidebar_expand_btn button, .st-key-sidebar_collapse_btn
+    button { ... }`), both buttons now look and animate identically —
+    only the arrow direction changes to indicate what the click will do.
     """
     clicked = None
     with st.sidebar:
@@ -41,7 +48,7 @@ def render_sidebar(active_page: str, username: str):
             # Collapsed view: just the expand button, centered in the
             # narrow strip.
             st.markdown("<div style='height:0.4rem'></div>", unsafe_allow_html=True)
-            if st.button("☰", key="sidebar_expand_btn", help="Show sidebar"):
+            if st.button("»", key="sidebar_expand_btn", help="Show sidebar"):
                 st.session_state.sidebar_open = True
                 st.rerun()
             return None
@@ -58,7 +65,7 @@ def render_sidebar(active_page: str, username: str):
                 unsafe_allow_html=True,
             )
         with top_r:
-            if st.button("⟨⟨", key="sidebar_collapse_btn", help="Collapse sidebar"):
+            if st.button("«", key="sidebar_collapse_btn", help="Collapse sidebar"):
                 st.session_state.sidebar_open = False
                 st.rerun()
 

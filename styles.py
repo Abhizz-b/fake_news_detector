@@ -50,55 +50,56 @@ section[data-testid="stSidebar"] button[kind="header"] {
 [data-testid="stSidebarResizeHandle"] {
     display: none !important;
 }
+
+/* FIX: added `transition` on width/min-width/max-width so collapse <->
+   expand animates smoothly instead of snapping instantly between
+   280px and 60px. `overflow: hidden` prevents inner content from
+   spilling out mid-transition while the sidebar is narrower than its
+   content. The inner wrapper gets its own opacity transition so
+   content fades rather than abruptly popping in/out. */
 section[data-testid="stSidebar"] {
     min-width: 280px !important;
     max-width: 280px !important;
     width: 280px !important;
     background: #0e0e18 !important;
     border-right: 1px solid #1c1c2a;
+    transition: min-width 0.28s cubic-bezier(0.4, 0, 0.2, 1),
+                max-width 0.28s cubic-bezier(0.4, 0, 0.2, 1),
+                width 0.28s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    overflow: hidden !important;
 }
 section[data-testid="stSidebar"] > div {
     padding-top: 1.6rem;
+    transition: opacity 0.2s ease;
 }
 
-/* Collapse button (small ghost icon, top-right of sidebar next to logo) */
+/* FIX: collapse button (expanded state) and expand button (collapsed
+   state) now share one style block so they look and feel identical —
+   only the glyph inside differs (rendered via components.py), and even
+   that now uses matching chevron glyphs ("«" / "»") instead of two
+   visually unrelated icons ("⟨⟨" vs "☰"). */
+.st-key-sidebar_expand_btn button,
 .st-key-sidebar_collapse_btn button {
-    background: transparent !important;
-    border: 1px solid #23232f !important;
-    color: #9c9cb0 !important;
-    border-radius: 8px !important;
-    padding: 0.25rem 0.5rem !important;
-    font-size: 0.85rem !important;
-    min-height: 0 !important;
-    transition: background 0.15s ease, color 0.15s ease;
-}
-.st-key-sidebar_collapse_btn button:hover {
-    background: #1c1c2a !important;
-    color: #fff !important;
-}
-
-/* Expand button — rendered inside the sidebar itself (in the narrow
-   collapsed strip), so unlike the old approach this never depends on a
-   fragile cross-element CSS selector to find a floating button
-   elsewhere on the page. Even with none of this styling applied, the
-   raw Streamlit button would still be visible in its normal spot; this
-   just makes it look nice. */
-.st-key-sidebar_expand_btn button {
     width: 42px !important;
     height: 42px !important;
     padding: 0 !important;
     border-radius: 12px !important;
-    background: linear-gradient(135deg, #8b5cf6, #6d28d9) !important;
-    border: none !important;
-    color: #fff !important;
+    background: #1c1c2a !important;
+    border: 1px solid #2a2a3a !important;
+    color: #cfcfe0 !important;
     font-size: 1.1rem !important;
-    box-shadow: 0 6px 18px rgba(139, 92, 246, 0.35) !important;
-    transition: transform 0.15s ease;
+    min-height: 0 !important;
+    transition: background 0.15s ease, transform 0.15s ease;
     margin: 0 auto !important;
-    display: block !important;
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
 }
-.st-key-sidebar_expand_btn button:hover {
-    transform: translateY(-1px) scale(1.04);
+.st-key-sidebar_expand_btn button:hover,
+.st-key-sidebar_collapse_btn button:hover {
+    background: #23233a !important;
+    color: #fff !important;
+    transform: scale(1.05);
 }
 
 /* ---------- Generic card ---------- */
@@ -166,10 +167,11 @@ section[data-testid="stSidebar"] .stButton button[kind="primary"] {
     text-align: left;
     box-shadow: 0 4px 14px rgba(139, 92, 246, 0.25);
 }
-/* the collapse button also matches .stButton above by default, so we
-   re-assert its compact ghost style with higher specificity */
-section[data-testid="stSidebar"] .st-key-sidebar_collapse_btn button {
-    width: auto;
+/* the collapse/expand buttons also match .stButton above by default, so
+   we re-assert their compact style with higher specificity */
+section[data-testid="stSidebar"] .st-key-sidebar_collapse_btn button,
+section[data-testid="stSidebar"] .st-key-sidebar_expand_btn button {
+    width: 42px !important;
 }
 
 /* Sidebar user card */
