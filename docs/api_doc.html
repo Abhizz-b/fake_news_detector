@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI虚假新闻检测 API 文档</title>
+    <title>AI Fake News Detector API Documentation</title>
     <style>
         :root {
             --primary-color: #3498db;
@@ -236,49 +236,50 @@
 <body>
     <header>
         <div class="container">
-            <h1>AI虚假新闻检测 API 文档</h1>
-            <p>基于大型语言模型（LLM）的虚假新闻检测服务</p>
+            <h1>AI Fake News Detector API Documentation</h1>
+            <p>A fake news detection service powered by Large Language Models (LLMs)</p>
         </div>
     </header>
     
     <nav>
         <div class="container">
             <ul>
-                <li><a href="#overview">概述</a></li>
-                <li><a href="#endpoints">API端点</a></li>
-                <li><a href="#examples">使用示例</a></li>
-                <li><a href="#errors">错误处理</a></li>
-                <li><a href="#implementation">实现详情</a></li>
-                <li><a href="#deployment">部署说明</a></li>
-                <li><a href="#limitations">限制说明</a></li>
+                <li><a href="#overview">Overview</a></li>
+                <li><a href="#endpoints">API Endpoints</a></li>
+                <li><a href="#examples">Usage Examples</a></li>
+                <li><a href="#errors">Error Handling</a></li>
+                <li><a href="#implementation">Implementation Details</a></li>
+                <li><a href="#deployment">Deployment</a></li>
+                <li><a href="#limitations">Limitations</a></li>
             </ul>
         </div>
     </nav>
     
     <main class="container">
         <section id="overview">
-            <h2>概述</h2>
+            <h2>Overview</h2>
             <div class="card">
-                <p>AI虚假新闻检测API是一个基于大型语言模型（LLM）的服务，能够分析新闻文本，提取核心声明，搜索相关证据，并对声明的真实性给出判断。该API使用FastAPI框架构建，支持REST请求，适合集成到各类应用程序中。</p>
+                <p>The AI Fake News Detector API is a service powered by a Large Language Model (LLM) that analyzes news text, extracts core claims, searches for relevant evidence, and returns a verdict on the truthfulness of the claim. The API is built with the FastAPI framework, supports REST requests, and is suitable for integration into a variety of applications.</p>
                 
-                <h3>基础信息</h3>
+                <h3>Basic Information</h3>
                 <ul>
-                    <li><strong>基础URL</strong>: <code>http://localhost:8080</code></li>
-                    <li><strong>API版本</strong>: 1.0.0</li>
-                    <li><strong>默认模型</strong>: Qwen2.5-14B-Instruct-AWQ</li>
+                    <li><strong>Base URL</strong>: <code>http://localhost:8080</code></li>
+                    <li><strong>API Version</strong>: 1.0.0</li>
+                    <li><strong>Default LLM</strong>: Groq (chat/reasoning)</li>
+                    <li><strong>Default Embedding Model</strong>: Google Gemini (<code>text-embedding-004</code>)</li>
                 </ul>
                 
-                <h3>认证</h3>
-                <p>当前版本API不需要认证即可使用。API主要设计为本地或内部网络部署使用。</p>
+                <h3>Authentication</h3>
+                <p>The current version of the API does not require authentication to use. The API is primarily designed for local or internal network deployment.</p>
                 
                 <div class="info-box">
-                    <p>该API利用LLM模型实现事实核查功能，确保信息的准确性和可靠性。通过自动化分析和证据检索，帮助用户识别虚假新闻。</p>
+                    <p>This API uses an LLM to perform fact-checking, ensuring the accuracy and reliability of information. Through automated analysis and evidence retrieval, it helps users identify fake news.</p>
                 </div>
             </div>
         </section>
         
         <section id="endpoints">
-            <h2>API端点</h2>
+            <h2>API Endpoints</h2>
             
             <div class="endpoint">
                 <div class="endpoint-title">
@@ -286,76 +287,76 @@
                     <span class="path">/check</span>
                 </div>
                 <div class="card">
-                    <p><strong>描述</strong>: 分析输入的新闻文本，提取核心声明，并基于网络搜索的证据评估其真实性。</p>
+                    <p><strong>Description</strong>: Analyzes the input news text, extracts the core claim, and evaluates its truthfulness based on evidence gathered from a web search.</p>
                     
-                    <h3>请求体</h3>
+                    <h3>Request Body</h3>
                     <pre><code>{
-  "text": "需要核查的新闻文本",
-  "api_base": "http://localhost:8000/v1",
-  "model": "Qwen2.5-14B-Instruct-AWQ",
+  "text": "News text to be fact-checked",
+  "api_base": "https://api.groq.com/openai/v1",
+  "model": "llama-3.3-70b-versatile",
   "temperature": 0.0,
   "max_tokens": 1000
 }</code></pre>
                     
-                    <h3>参数说明</h3>
+                    <h3>Parameters</h3>
                     <table>
                         <thead>
                             <tr>
-                                <th>参数</th>
-                                <th>类型</th>
-                                <th>必填</th>
-                                <th>默认值</th>
-                                <th>描述</th>
+                                <th>Parameter</th>
+                                <th>Type</th>
+                                <th>Required</th>
+                                <th>Default</th>
+                                <th>Description</th>
                             </tr>
                         </thead>
                         <tbody>
                             <tr>
                                 <td>text</td>
                                 <td>string</td>
-                                <td>是</td>
+                                <td>Yes</td>
                                 <td>-</td>
-                                <td>需要核查的新闻文本</td>
+                                <td>The news text to be fact-checked</td>
                             </tr>
                             <tr>
                                 <td>api_base</td>
                                 <td>string</td>
-                                <td>否</td>
-                                <td>"http://localhost:8000/v1"</td>
-                                <td>LLM API的基础URL</td>
+                                <td>No</td>
+                                <td>"https://api.groq.com/openai/v1"</td>
+                                <td>Base URL for the LLM API</td>
                             </tr>
                             <tr>
                                 <td>model</td>
                                 <td>string</td>
-                                <td>否</td>
-                                <td>"Qwen2.5-14B-Instruct-AWQ"</td>
-                                <td>使用的语言模型</td>
+                                <td>No</td>
+                                <td>"llama-3.3-70b-versatile"</td>
+                                <td>The language model to use (served via Groq)</td>
                             </tr>
                             <tr>
                                 <td>temperature</td>
                                 <td>float</td>
-                                <td>否</td>
+                                <td>No</td>
                                 <td>0.0</td>
-                                <td>模型温度参数（0.0-1.0），越低越确定性，越高越创造性</td>
+                                <td>Model temperature (0.0-1.0); lower is more deterministic, higher is more creative</td>
                             </tr>
                             <tr>
                                 <td>max_tokens</td>
                                 <td>integer</td>
-                                <td>否</td>
+                                <td>No</td>
                                 <td>1000</td>
-                                <td>响应的最大标记数</td>
+                                <td>Maximum number of tokens in the response</td>
                             </tr>
                         </tbody>
                     </table>
                     
-                    <h3>响应</h3>
+                    <h3>Response</h3>
                     <pre><code>{
-  "claim": "提取的核心声明",
+  "claim": "The extracted core claim",
   "verdict": "TRUE/FALSE/PARTIALLY TRUE/UNVERIFIABLE",
-  "reasoning": "详细的推理过程",
+  "reasoning": "Detailed reasoning process",
   "evidence": [
     {
-      "text": "证据文本",
-      "source": "证据来源URL",
+      "text": "Evidence text",
+      "source": "Evidence source URL",
       "similarity": 0.95
     },
     {...}
@@ -363,55 +364,55 @@
   "timestamp": "2025-05-18T12:34:56.789"
 }</code></pre>
                     
-                    <h3>响应字段说明</h3>
+                    <h3>Response Fields</h3>
                     <table>
                         <thead>
                             <tr>
-                                <th>字段</th>
-                                <th>类型</th>
-                                <th>描述</th>
+                                <th>Field</th>
+                                <th>Type</th>
+                                <th>Description</th>
                             </tr>
                         </thead>
                         <tbody>
                             <tr>
                                 <td>claim</td>
                                 <td>string</td>
-                                <td>从输入文本中提取的核心声明</td>
+                                <td>The core claim extracted from the input text</td>
                             </tr>
                             <tr>
                                 <td>verdict</td>
                                 <td>string</td>
-                                <td>判断结果：TRUE（正确）、FALSE（错误）、PARTIALLY TRUE（部分正确）或UNVERIFIABLE（无法验证）</td>
+                                <td>The verdict: TRUE, FALSE, PARTIALLY TRUE, or UNVERIFIABLE</td>
                             </tr>
                             <tr>
                                 <td>reasoning</td>
                                 <td>string</td>
-                                <td>详细的推理过程，解释为何得出该判断</td>
+                                <td>A detailed explanation of how the verdict was reached</td>
                             </tr>
                             <tr>
                                 <td>evidence</td>
                                 <td>array</td>
-                                <td>支持判断的证据块数组</td>
+                                <td>An array of evidence snippets supporting the verdict</td>
                             </tr>
                             <tr>
                                 <td>evidence[].text</td>
                                 <td>string</td>
-                                <td>证据文本内容</td>
+                                <td>The evidence text content</td>
                             </tr>
                             <tr>
                                 <td>evidence[].source</td>
                                 <td>string</td>
-                                <td>证据来源URL</td>
+                                <td>The source URL of the evidence</td>
                             </tr>
                             <tr>
                                 <td>evidence[].similarity</td>
                                 <td>float</td>
-                                <td>证据与声明的相关性分数（0-1之间）</td>
+                                <td>Relevance score between the evidence and the claim (0-1)</td>
                             </tr>
                             <tr>
                                 <td>timestamp</td>
                                 <td>string</td>
-                                <td>响应生成的时间戳（ISO格式）</td>
+                                <td>Timestamp when the response was generated (ISO format)</td>
                             </tr>
                         </tbody>
                     </table>
@@ -424,9 +425,9 @@
                     <span class="path">/health</span>
                 </div>
                 <div class="card">
-                    <p><strong>描述</strong>: 检查API服务是否正常运行。</p>
+                    <p><strong>Description</strong>: Checks whether the API service is running normally.</p>
                     
-                    <h3>响应</h3>
+                    <h3>Response</h3>
                     <pre><code>{
   "status": "healthy"
 }</code></pre>
@@ -435,19 +436,19 @@
         </section>
         
         <section id="examples">
-            <h2>使用示例</h2>
+            <h2>Usage Examples</h2>
             
-            <h3>使用curl请求</h3>
+            <h3>Using curl</h3>
             <div class="card">
                 <pre><code>curl -X POST "http://localhost:8080/check" \
      -H "Content-Type: application/json" \
      -d '{
-           "text": "2023年，中国GDP增长率达到15%，创历史新高。",
+           "text": "In 2023, China'"'"'s GDP growth rate reached 15%, a record high.",
            "temperature": 0.0
          }'</code></pre>
             </div>
             
-            <h3>Python示例</h3>
+            <h3>Python Example</h3>
             <div class="card">
                 <pre><code>import requests
 import json
@@ -455,9 +456,9 @@ import json
 url = "http://localhost:8080/check"
 
 payload = {
-    "text": "2023年，中国GDP增长率达到15%，创历史新高。",
-    "api_base": "http://localhost:8000/v1",
-    "model": "Qwen2.5-14B-Instruct-AWQ",
+    "text": "In 2023, China's GDP growth rate reached 15%, a record high.",
+    "api_base": "https://api.groq.com/openai/v1",
+    "model": "llama-3.3-70b-versatile",
     "temperature": 0.0
 }
 
@@ -470,13 +471,13 @@ result = response.json()
 print(json.dumps(result, indent=2, ensure_ascii=False))</code></pre>
             </div>
             
-            <h3>JavaScript示例</h3>
+            <h3>JavaScript Example</h3>
             <div class="card">
                 <pre><code>async function checkNews() {
     const url = "http://localhost:8080/check";
     
     const payload = {
-        text: "2023年，中国GDP增长率达到15%，创历史新高。",
+        text: "In 2023, China's GDP growth rate reached 15%, a record high.",
         temperature: 0.0
     };
     
@@ -499,91 +500,93 @@ print(json.dumps(result, indent=2, ensure_ascii=False))</code></pre>
         </section>
         
         <section id="errors">
-            <h2>错误处理</h2>
+            <h2>Error Handling</h2>
             <div class="card">
-                <p>当发生错误时，API将返回标准HTTP错误代码和详细信息：</p>
+                <p>When an error occurs, the API returns a standard HTTP error code along with details:</p>
                 
                 <pre><code>{
-  "detail": "事实检查过程中出错: 具体错误信息"
+  "detail": "Error during fact-checking: specific error message"
 }</code></pre>
                 
-                <h3>常见错误代码</h3>
+                <h3>Common Error Codes</h3>
                 <table>
                     <thead>
                         <tr>
-                            <th>状态码</th>
-                            <th>说明</th>
+                            <th>Status Code</th>
+                            <th>Description</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr>
                             <td>400</td>
-                            <td>请求参数错误或格式不正确</td>
+                            <td>Invalid request parameters or malformed request</td>
                         </tr>
                         <tr>
                             <td>500</td>
-                            <td>服务器内部错误，如LLM API不可用或处理过程中的异常</td>
+                            <td>Internal server error, e.g. the LLM API is unavailable or an exception occurred during processing</td>
                         </tr>
                     </tbody>
                 </table>
                 
                 <div class="warning-box">
-                    <p>注意：检查LLM服务是否正常运行，并确保提供的API基础URL是正确的。如果使用Docker部署，确保容器之间的网络连接正常。</p>
+                    <p>Note: Check whether the LLM service is running normally and confirm that the provided API base URL is correct. If deploying with Docker, make sure network connectivity between containers is working.</p>
                 </div>
             </div>
         </section>
         
         <section id="implementation">
-            <h2>实现细节</h2>
+            <h2>Implementation Details</h2>
             <div class="card">
-                <h3>处理流程</h3>
+                <h3>Processing Pipeline</h3>
                 <ol>
-                    <li><strong>声明提取</strong>：使用LLM从输入文本中提取核心声明。</li>
-                    <li><strong>证据搜索</strong>：使用DuckDuckGo搜索引擎获取相关证据。</li>
-                    <li><strong>证据排序</strong>：使用BGE-M3嵌入模型对证据块进行相关性排序。</li>
-                    <li><strong>声明评估</strong>：根据排序后的证据评估声明的真实性。</li>
+                    <li><strong>Claim Extraction</strong>: Uses Groq's LLM to extract the core claim from the input text.</li>
+                    <li><strong>Evidence Search</strong>: Uses the DuckDuckGo search engine to retrieve relevant evidence.</li>
+                    <li><strong>Evidence Ranking</strong>: Uses Google Gemini's <code>text-embedding-004</code> model to rank evidence snippets by relevance.</li>
+                    <li><strong>Claim Evaluation</strong>: Evaluates the truthfulness of the claim based on the ranked evidence, with output always returned in English regardless of the input language.</li>
                 </ol>
                 
-                <h3>依赖组件</h3>
+                <h3>Dependencies</h3>
                 <ul>
-                    <li><strong>LLM引擎</strong>：使用Qwen2.5模型进行声明提取和评估</li>
-                    <li><strong>嵌入模型</strong>：使用BGE-M3进行语义相似度计算</li>
-                    <li><strong>搜索引擎</strong>：使用DuckDuckGo API搜索相关证据</li>
+                    <li><strong>LLM engine</strong>: Uses Groq's cloud API for claim extraction and evaluation</li>
+                    <li><strong>Embedding model</strong>: Uses Google Gemini's <code>text-embedding-004</code> for semantic similarity computation</li>
+                    <li><strong>Search engine</strong>: Uses the DuckDuckGo API to search for relevant evidence</li>
                 </ul>
                 
                 <div class="info-box">
-                    <p>系统使用本地运行的Qwen2.5模型，较低的温度参数（0.0）使模型更加确定性，更适合事实检查任务。</p>
+                    <p>The system uses Groq's hosted LLM and Google Gemini's embedding model, both on free tiers with no credit card required. A low temperature setting (0.0) makes the model more deterministic, which is better suited to fact-checking tasks.</p>
                 </div>
             </div>
         </section>
         
         <section id="deployment">
-            <h2>部署说明</h2>
+            <h2>Deployment</h2>
             <div class="card">
-                <h3>使用Gunicorn启动</h3>
+                <h3>Starting with Gunicorn</h3>
                 <pre><code>gunicorn -c gunicorn.conf.py api:app</code></pre>
                 
                 
-                <h3>性能考量</h3>
+                <h3>Performance Considerations</h3>
                 <ul>
-                    <li>每个请求处理时间取决于LLM响应速度和网络搜索效率</li>
-                    <li>建议使用异步处理长时间运行的请求</li>
-                    <li>默认配置下，API使用Gunicorn启动4个worker进程，可根据硬件资源调整</li>
+                    <li>Per-request processing time depends on Groq's response speed and web search efficiency</li>
+                    <li>Asynchronous processing is recommended for long-running requests</li>
+                    <li>By default, the API starts with 4 Gunicorn worker processes; this can be adjusted based on available hardware resources</li>
+                    <li>The Streamlit frontend is deployed separately via Streamlit Community Cloud; API keys (Groq, Gemini) should be stored as secrets, never committed to the repo</li>
                 </ul>
             </div>
         </section>
         
         <section id="limitations">
-            <h2>限制说明</h2>
+            <h2>Limitations</h2>
             <div class="card">
                 <ul>
-                    <li>当前版本依赖外部搜索引擎获取证据，可能受网络限制</li>
-                    <li>对于非中文或英文的内容，检测准确率可能较低</li>
-                    <li>由于依赖LLM，判断结果可能存在模型固有的偏见或不准确性</li>
+                    <li>The current version relies on an external search engine to retrieve evidence and may be affected by network restrictions</li>
+                    <li>Output (claim, verdict, and reasoning) is always returned in English, regardless of the input language</li>
+                    <li>Because the system relies on an LLM, verdicts may be subject to the model's inherent biases or inaccuracies</li>
+                    <li>Both Groq and Gemini free tiers have rate limits; heavy traffic may result in throttling</li>
                 </ul>
                 
                 <div class="warning-box">
-                    <p>注意：API设计为内部网络使用，不建议直接暴露到公共互联网。如需公共访问，请增加适当的认证和速率限制机制。</p>
+                    <p>Note: The API is designed for internal network use and is not recommended for direct exposure to the public internet. For public access, add appropriate authentication and rate-limiting mechanisms.</p>
                 </div>
             </div>
         </section>
@@ -591,8 +594,8 @@ print(json.dumps(result, indent=2, ensure_ascii=False))</code></pre>
     
     <footer>
         <div class="container">
-            <p>AI虚假新闻检测API文档 &copy; 2025</p>
-            <p>基于FastAPI和Qwen2.5 LLM</p>
+            <p>AI Fake News Detector API Documentation &copy; 2025</p>
+            <p>Powered by FastAPI and Qwen2.5 LLM</p>
         </div>
     </footer>
 </body>
