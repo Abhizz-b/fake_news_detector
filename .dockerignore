@@ -1,19 +1,22 @@
-# Git和开发工具
+# Git and dev tools
 .git/
 .claude/
 .lh/
 .vscode/
 
-# Python缓存
+# Python cache
 __pycache__/
 *.py[cod]
 venv/
 
-# 临时文件
+# Temporary files
 *.log
 *.tmp
 *.pdf
 test/
 
-# 系统文件
+# Environment variables / secrets
+.env
+
+# System files
 .DS_Store
