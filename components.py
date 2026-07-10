@@ -19,7 +19,56 @@ def verdict_meta(verdict: str) -> dict:
 
 
 # ---------------------------------------------------------------------------
+# NEW: Minimal top header (replaces the sidebar entirely)
+# ---------------------------------------------------------------------------
+def render_account_menu(username: str):
+    """Minimal top-right account control: a plain circular avatar button
+    that opens a small popover with History / Logout. Replaces the old
+    full-height sidebar entirely — there's no persistent nav rail anymore,
+    just this one control plus the brand mark rendered alongside it by
+    render_header() below.
+    """
+    clicked = None
+    with st.popover(username[:1].upper() if username else "?"):
+        st.markdown(f"**{username}**")
+        st.caption("Student")
+        st.divider()
+        if st.button("History", key="account_menu_history_btn", use_container_width=True):
+            clicked = "history"
+        if st.button("Logout", key="account_menu_logout_btn", use_container_width=True):
+            clicked = "logout"
+    return clicked
+
+
+def render_header(username: str):
+    """Slim top header replacing the sidebar: a simple search-glass icon
+    + wordmark on the left, and the circular account avatar (with its
+    History/Logout popover) on the right. Returns 'history', 'logout',
+    or None depending on what the person clicked in the account menu.
+    """
+    left, right = st.columns([6, 1], vertical_alignment="center")
+    with left:
+        st.markdown(
+            """
+            <div class="fnd-header-brand">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="11" cy="11" r="7"></circle>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
+                <span>Fake News Detector</span>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+    with right:
+        clicked = render_account_menu(username)
+    return clicked
+
+
+# ---------------------------------------------------------------------------
 # Sidebar (with working, reliable collapse / expand toggle)
+# NOTE: kept here unused, in case a sidebar-based nav is wanted again later.
+# The app now uses render_header()/render_account_menu() above instead.
 # ---------------------------------------------------------------------------
 def render_sidebar(active_page: str, username: str):
     """Renders logo + collapse toggle, nav buttons, and user card.
@@ -106,34 +155,49 @@ def render_how_it_works():
         ("2", "Our AI analyzes", "We scan multiple trusted sources"),
         ("3", "Get the verdict", "See result with evidence & reasoning"),
     ]
-    st.markdown('<div class="fnd-card">', unsafe_allow_html=True)
-    st.markdown("#### 💡 How it works")
-    for num, title, subtitle in steps:
-        st.markdown(
-            f"""
-            <div style="display:flex;gap:0.7rem;margin:0.8rem 0;">
-                <div class="fnd-step-icon">{num}</div>
-                <div>
-                    <div style="font-weight:600;font-size:0.9rem;">{title}</div>
-                    <div style="color:#8a8aa3;font-size:0.8rem;">{subtitle}</div>
-                </div>
-            </div>
-            """,
-            unsafe_allow_html=True,
+
+    # FIX: all step rows + the quote block are now assembled as single
+    # lines with NO leading whitespace before being joined together.
+    # The previous version built this via an indented multi-line
+    # f-string, which (once combined across the loop) produced lines
+    # starting with 4+ spaces — and Markdown treats any line indented
+    # 4+ spaces as a preformatted code block. That's what caused the
+    # raw HTML/SVG source to show up as literal text on the page
+    # instead of being rendered. Keeping every line flush-left avoids
+    # tripping that rule.
+    steps_html = ""
+    for i, (num, title, subtitle) in enumerate(steps):
+        is_last = i == len(steps) - 1
+        line_class = "" if is_last else "fnd-step-line"
+        steps_html += (
+            f'<div class="fnd-step-row {line_class}">'
+            f'<div class="fnd-step-icon">{num}</div>'
+            f'<div>'
+            f'<div class="fnd-step-title">{title}</div>'
+            f'<div class="fnd-step-subtitle">{subtitle}</div>'
+            f'</div>'
+            f'</div>'
         )
-    st.markdown(
-        """
-        <div class="fnd-quote">
-            "Think before you share.<br/>Verify before you believe."
-            <svg class="fnd-quote-underline" viewBox="0 0 70 6" xmlns="http://www.w3.org/2000/svg">
-                <path d="M2 4 Q 12 -1, 22 4 T 42 4 T 62 4" stroke="#8b5cf6" stroke-width="2"
-                      fill="none" stroke-linecap="round"/>
-            </svg>
-        </div>
-        """,
-        unsafe_allow_html=True,
+
+    quote_html = (
+        '<div class="fnd-quote">'
+        '"Think before you share.<br/>Verify before you believe."'
+        '<svg class="fnd-quote-underline" viewBox="0 0 70 6" xmlns="http://www.w3.org/2000/svg">'
+        '<path d="M2 4 Q 12 -1, 22 4 T 42 4 T 62 4" stroke="#8b5cf6" stroke-width="2" '
+        'fill="none" stroke-linecap="round"/>'
+        '</svg>'
+        '</div>'
     )
-    st.markdown("</div>", unsafe_allow_html=True)
+
+    card_html = (
+        '<div class="fnd-card">'
+        '<div class="fnd-card-heading">💡 How it works</div>'
+        f'{steps_html}'
+        f'{quote_html}'
+        '</div>'
+    )
+
+    st.markdown(card_html, unsafe_allow_html=True)
 
 
 # ---------------------------------------------------------------------------

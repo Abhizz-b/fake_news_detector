@@ -13,7 +13,15 @@ CSS = """
 }
 #MainMenu {visibility: hidden;}
 footer {visibility: hidden;}
-[data-testid="stToolbar"] {visibility: hidden;}
+/* FIX: visibility:hidden still reserves the element's box (that's the
+   empty rounded rectangle that was floating above "How it works").
+   display:none removes it from layout entirely. */
+[data-testid="stToolbar"] {
+    display: none !important;
+}
+[data-testid="stStatusWidget"] {
+    display: none !important;
+}
 /* FIX: these reserve empty space even when just visibility:hidden (that
    was likely the empty rounded box floating above "How it works" in the
    screenshot). display:none removes them from layout entirely. */
@@ -223,7 +231,8 @@ section[data-testid="stSidebar"] .st-key-sidebar_expand_btn button {
     transform: translateY(-1px);
 }
 
-/* ---------- Hero heading ---------- */
+/* ---------- Hero heading (old two-column home layout, kept in case
+   it's reused elsewhere) ---------- */
 .fnd-hero {
     position: relative;
     padding: 0.5rem 0 0.5rem;
@@ -261,7 +270,130 @@ section[data-testid="stSidebar"] .st-key-sidebar_expand_btn button {
     z-index: 1;
 }
 
-/* ---------- Input card focus glow ---------- */
+/* =========================================================================
+   NEW: Slim top header (replaces the sidebar entirely)
+   Left: a plain outline search-glass icon + wordmark. Right: a circular
+   avatar (rendered via st.popover in components.py) that opens a small
+   History/Logout menu on click — there's no persistent nav rail anymore.
+   ========================================================================= */
+.fnd-header-brand {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    color: #f3f1f9;
+    font-weight: 700;
+    font-size: 0.9rem;
+    padding-top: 0.4rem;
+}
+.fnd-header-brand svg {
+    color: #cfcfe0;
+    flex-shrink: 0;
+}
+
+/* The account avatar is an st.popover trigger button — style it as a
+   plain circle with the user's initial, no rectangle/card chrome. */
+[data-testid="stPopover"] button {
+    width: 34px !important;
+    height: 34px !important;
+    min-height: 0 !important;
+    padding: 0 !important;
+    border-radius: 50% !important;
+    background: #7c3aed !important;
+    border: none !important;
+    color: #fff !important;
+    font-weight: 700 !important;
+    font-size: 0.78rem !important;
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s ease, transform 0.15s ease;
+}
+[data-testid="stPopover"] button:hover {
+    background: #8b5cf6 !important;
+    transform: scale(1.05);
+}
+[data-testid="stPopoverBody"] {
+    background: #14141f !important;
+    border: 1px solid #23232f !important;
+}
+
+/* =========================================================================
+   NEW: Minimal, vertically-centered home page hero
+   ("Think Twice. Verify Everything.")
+   The whole block is wrapped in st.container(key="home_center_wrap") in
+   app.py; this class turns that wrapper into a flex column that centers
+   its children both horizontally and vertically, giving the generous,
+   uncluttered spacing from the approved mockup instead of everything
+   being pinned to the top of the page.
+   ========================================================================= */
+.st-key-home_center_wrap {
+    display: flex !important;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 62vh;
+    padding: 2rem 0;
+}
+.fnd-hero-minimal {
+    text-align: center;
+    margin-bottom: 2.6rem;
+    animation: fndFadeUp 0.5s ease-out both;
+}
+.fnd-hero-minimal h1 {
+    font-size: 2.7rem;
+    font-weight: 800;
+    line-height: 1.28;
+    margin-bottom: 0.4rem;
+    color: rgba(243, 241, 249, 0.68);
+}
+.fnd-hero-minimal .accent {
+    color: rgba(167, 139, 250, 0.68);
+}
+.fnd-hero-minimal p {
+    color: #75758c;
+    font-size: 0.98rem;
+    line-height: 1.7;
+    max-width: 420px;
+    margin: 1rem auto 0;
+}
+
+/* Minimal home page: the single claim/article box (headline or full
+   article — same field), with a soft purple glow border */
+.st-key-claim_input_box {
+    width: 100%;
+    max-width: 540px;
+}
+.st-key-claim_input_box textarea {
+    border-radius: 12px !important;
+    border: 1px solid #3a2f6a !important;
+    background: #14141f !important;
+    color: #f3f1f9 !important;
+    font-size: 0.9rem !important;
+    padding: 1.05rem 1.2rem !important;
+}
+.st-key-claim_input_box textarea::placeholder {
+    color: #75758c !important;
+}
+.st-key-claim_input_box textarea:focus {
+    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2) !important;
+    border-color: #8b5cf6 !important;
+}
+
+/* Minimal home page: Clear button styled as a quiet outline button
+   (rather than default Streamlit "secondary" gray) */
+.st-key-clear_home_btn button {
+    background: #14141f !important;
+    border: 1px solid #2a2a3a !important;
+    color: #cfcfe0 !important;
+    border-radius: 9px !important;
+    font-weight: 600 !important;
+}
+.st-key-clear_home_btn button:hover {
+    border-color: #34344a !important;
+    color: #fff !important;
+}
+
+/* ---------- Input card focus glow (results/other pages) ---------- */
 .stTextArea textarea {
     border-radius: 12px !important;
     transition: box-shadow 0.2s ease, border-color 0.2s ease;
@@ -271,18 +403,60 @@ section[data-testid="stSidebar"] .st-key-sidebar_expand_btn button {
     border-color: #8b5cf6 !important;
 }
 
-/* ---------- How it works step icon ---------- */
+/* ---------- How it works: card heading + steps ----------
+   FIX: previously each step was rendered via its own st.markdown()
+   call, which meant Streamlit injected its own default block spacing
+   between them — on top of our own margins — making the gaps look
+   uneven and "ugly". Now all steps render inside a single markdown
+   call (see components.py) so spacing is fully controlled by this
+   CSS. A thin connecting line between icons gives it a cleaner,
+   timeline-style feel instead of three disconnected rows. */
+.fnd-card-heading {
+    font-weight: 700;
+    font-size: 1.05rem;
+    margin-bottom: 1.15rem;
+}
+.fnd-step-row {
+    display: flex;
+    gap: 0.9rem;
+    position: relative;
+    padding-bottom: 1.15rem;
+}
+.fnd-step-row.fnd-step-line::after {
+    content: "";
+    position: absolute;
+    left: 15px;
+    top: 34px;
+    width: 2px;
+    height: calc(100% - 22px);
+    background: #23232f;
+}
 .fnd-step-icon {
-    width: 30px;
-    height: 30px;
-    border-radius: 8px;
-    background: linear-gradient(135deg, rgba(139,92,246,0.25), rgba(109,40,217,0.2));
+    width: 32px;
+    height: 32px;
+    border-radius: 9px;
+    background: linear-gradient(135deg, rgba(139,92,246,0.28), rgba(109,40,217,0.22));
+    border: 1px solid rgba(139,92,246,0.3);
     display: flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
     font-weight: 700;
+    font-size: 0.85rem;
     color: #d8cffa;
+    position: relative;
+    z-index: 1;
+}
+.fnd-step-title {
+    font-weight: 600;
+    font-size: 0.92rem;
+    color: #f0eefc;
+    margin-bottom: 0.15rem;
+}
+.fnd-step-subtitle {
+    color: #8a8aa3;
+    font-size: 0.8rem;
+    line-height: 1.4;
 }
 .fnd-quote {
     margin-top: 1rem;

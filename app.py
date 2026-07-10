@@ -11,9 +11,7 @@ from model_manager import model_manager
 
 from styles import inject_css
 from components import (
-    render_sidebar,
-    render_how_it_works,
-    render_tech_badge,
+    render_header,
     render_verdict_card,
     render_confidence_ring,
     render_reasoning_card,
@@ -474,55 +472,61 @@ def estimate_confidence(verdict: str, evidence_count: int) -> int:
 
 # ===========================================================================
 # ---- HOME PAGE ----
+# Redesigned to be a minimal, centered "Think Twice. Verify Everything."
+# layout: hero copy, a single-line headline/claim search bar, a larger
+# drop-zone-style textarea for full articles/posts, and Clear / Check Now
+# actions underneath. The old two-column layout (with "How it works" /
+# "Powered by" side cards) is no longer used on the home page — those
+# components still exist in components.py untouched, in case they're
+# wanted elsewhere later.
 # ===========================================================================
 
 def render_home_page():
-    left, right = st.columns([2, 1.15], vertical_alignment="top")
+    spacer_l, center, spacer_r = st.columns([1, 2.4, 1])
 
-    with left:
-        st.markdown(
-            """
-            <div class="fnd-hero">
-                <h1>Not Sure If It's True?<br/><span class="accent">Let's Verify It.</span></h1>
-                <p>Paste any news, headline, or claim and our AI will fact-check it using trusted sources.</p>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-        st.markdown("<div style='height:1rem'></div>", unsafe_allow_html=True)
+    with center:
+        with st.container(key="home_center_wrap"):
+            st.markdown(
+                """
+                <div class="fnd-hero-minimal">
+                    <h1>Think Twice.<br/><span class="accent">Verify Everything.</span></h1>
+                    <p>Paste any news, headline, or claim and our AI will fact-check it using trusted sources.</p>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
 
-        st.markdown('<div class="fnd-card">', unsafe_allow_html=True)
-        claim_input = st.text_area(
-            "Claim input",
-            placeholder="Paste your news or claim here...",
-            height=140,
-            label_visibility="collapsed",
-            key="claim_input_box",
-        )
-        c1, c2 = st.columns([1, 1])
-        with c1:
-            if st.button("🧹 Clear", use_container_width=True):
-                st.session_state.claim_input_box = ""
-                st.rerun()
-        with c2:
-            check_clicked = st.button("Check Now →", type="primary", use_container_width=True)
-        st.markdown("</div>", unsafe_allow_html=True)
+            claim_input = st.text_area(
+                "Claim input",
+                placeholder="Paste a headline, article, or claim...",
+                height=140,
+                label_visibility="collapsed",
+                key="claim_input_box",
+            )
 
-        # FIX: this now runs INSIDE the left column (same width as the
-        # input card) instead of after both columns close. That's what
-        # was causing the loading spinner to render as a plain, full-width,
-        # unstyled Streamlit box below everything else.
-        if check_clicked and claim_input and claim_input.strip():
-            run_fact_check(claim_input.strip())
+            st.markdown("<div style='height:1rem'></div>", unsafe_allow_html=True)
 
-        st.info(
-            "ℹ️ This is a student project demo using free-tier AI models. "
-            "Please verify important claims through official sources."
-        )
+            c1, c2 = st.columns([1, 1.5])
+            with c1:
+                if st.button("Clear", use_container_width=True, key="clear_home_btn"):
+                    st.session_state.claim_input_box = ""
+                    st.rerun()
+            with c2:
+                check_clicked = st.button("Check Now →", type="primary", use_container_width=True)
 
-    with right:
-        render_how_it_works()
-        render_tech_badge()
+            final_claim = (claim_input or "").strip()
+
+            if check_clicked:
+                if final_claim:
+                    run_fact_check(final_claim)
+                else:
+                    st.warning("Please paste a headline or claim first.")
+
+            st.markdown("<div style='height:1rem'></div>", unsafe_allow_html=True)
+            st.info(
+                "This is a student project demo using free-tier AI models. "
+                "Please verify important claims through official sources."
+            )
 
 
 def run_fact_check(user_input: str):
@@ -802,8 +806,6 @@ if "current_history_id" not in st.session_state:
     st.session_state.current_history_id = None
 if "last_result" not in st.session_state:
     st.session_state.last_result = None
-if "sidebar_open" not in st.session_state:
-    st.session_state.sidebar_open = True
 
 if "user_id" not in st.session_state or st.session_state.user_id is None:
     saved_login = auth.check_saved_login()
@@ -818,39 +820,13 @@ if is_authenticated:
     if not check_user_config_status():
         show_initial_config_wizard()
     else:
-        # FIX: when collapsed, shrink the sidebar to a narrow strip instead
-        # of hiding it completely (display:none). The expand button is now
-        # rendered INSIDE render_sidebar() itself (in its normal spot in
-        # the sidebar), so it's always visible in the strip — no more
-        # depending on a separate floating button + fragile CSS selector
-        # to find it, which is what made it disappear after collapsing.
-        if not st.session_state.sidebar_open:
-            st.markdown(
-                """
-                <style>
-                section[data-testid='stSidebar'] {
-                    min-width: 60px !important;
-                    max-width: 60px !important;
-                    width: 60px !important;
-                }
-                section[data-testid='stSidebar'] > div {
-                    padding-left: 0.4rem !important;
-                    padding-right: 0.4rem !important;
-                }
-                </style>
-                """,
-                unsafe_allow_html=True,
-            )
+        # Sidebar removed entirely. Instead: a slim header (brand mark on
+        # the left, circular account avatar on the right). The avatar
+        # opens a small popover with History / Logout — no persistent nav
+        # rail taking up screen space anymore.
+        nav_click = render_header(username=st.session_state.get("username", "User"))
 
-        nav_click = render_sidebar(
-            active_page=st.session_state.page if st.session_state.page in ("home", "history") else "home",
-            username=st.session_state.get("username", "User"),
-        )
-
-        if nav_click == "home":
-            st.session_state.page = "home"
-            st.rerun()
-        elif nav_click == "history":
+        if nav_click == "history":
             st.session_state.page = "history"
             st.rerun()
         elif nav_click == "logout":
