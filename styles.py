@@ -318,19 +318,7 @@ section[data-testid="stSidebar"] .st-key-sidebar_expand_btn button {
 [data-testid="stPopover"] {
     display: inline-flex;
     align-items: center;
-    gap: 10px;
-    background: #15111f;
-    border: 1px solid #29233b;
-    border-radius: 999px;
-    padding: 5px 16px 5px 5px;
     margin-right: -0.4rem;
-}
-[data-testid="stPopover"]::after {
-    content: "▾";
-    color: #8d87a3;
-    font-size: 10px;
-    line-height: 1;
-    pointer-events: none;
 }
 /* FIX: a plain border-bottom on this element only spans the padded
    block-container width, not the full page. This pseudo-element
@@ -362,30 +350,66 @@ section[data-testid="stSidebar"] .st-key-sidebar_expand_btn button {
     flex-shrink: 0;
 }
 
-/* Avatar circle button itself — plain, bold initial, no icon overlap. */
-[data-testid="stPopover"] button svg,
-[data-testid="stPopover"] button [data-baseweb="icon"] {
-    display: none !important;
-}
+/* Avatar circle button itself — plain, bold initial, no icon overlap.
+   FIX: Streamlit's popover trigger button can carry its own native
+   disclosure marker/pseudo-content depending on browser + baseweb
+   version — this is what was showing up as a *second*, stray gray
+   triangle outside the circle in addition to our own intentional
+   chevron on [data-testid="stPopover"]::after above. Forcing both
+   ::before and ::after to `content: none` directly on the button
+   guarantees only our single external chevron ever renders. */
 [data-testid="stPopover"] button {
-    width: 34px !important;
-    height: 34px !important;
-    min-height: 0 !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    border-radius: 50% !important;
-    background: linear-gradient(135deg, #8b5cf6, #6d28d9) !important;
-    border: none !important;
-    color: #fff !important;
-    font-weight: 700 !important;
-    font-size: 0.85rem !important;
     display: flex !important;
-    align-items: center;
-    justify-content: center;
-    transition: transform 0.15s ease;
+    align-items: center !important;
+    gap: 10px !important;
+    height: auto !important;
+    min-height: 0 !important;
+    width: auto !important;
+    padding: 5px 16px 5px 5px !important;
+    margin: 0 !important;
+    background: #15111f !important;
+    border: 1px solid #29233b !important;
+    border-radius: 999px !important;
+    color: #fff !important;
+    transition: border-color 0.15s ease;
 }
 [data-testid="stPopover"] button:hover {
-    transform: scale(1.05);
+    border-color: #3a3350 !important;
+}
+/* The letter itself: Streamlit renders the button's text label inside
+   its own inner wrapper (markdown container / <p>). THIS inner element
+   — not the button — is what gets the circular purple-gradient avatar
+   look, fixed to a neat 34x34 circle with the bold initial centered
+   inside it. */
+[data-testid="stPopover"] button [data-testid="stMarkdownContainer"],
+[data-testid="stPopover"] button [data-testid="stMarkdownContainer"] p {
+    width: 34px !important;
+    height: 34px !important;
+    min-width: 34px !important;
+    border-radius: 50% !important;
+    background: linear-gradient(135deg, #8b5cf6, #6d28d9) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-weight: 800 !important;
+    font-size: 0.95rem !important;
+    letter-spacing: 0.01em;
+    color: #fff !important;
+    margin: 0 !important;
+    line-height: 1 !important;
+}
+/* FIX (round 3): rather than hiding Streamlit's native trigger icon
+   (that just made the chevron decorative/unclickable), we keep it —
+   it's a real child of the real <button>, so it's clickable by
+   definition — and simply restyle its color/size so it reads as a
+   quiet chevron sitting in the pill's empty space to the right of the
+   circle, instead of an oversized icon crammed inside the circle. */
+[data-testid="stPopover"] button svg,
+[data-testid="stPopover"] button [data-testid*="Icon"] {
+    width: 14px !important;
+    height: 14px !important;
+    color: #9d97b3 !important;
+    flex-shrink: 0;
 }
 
 /* =========================================================================
@@ -449,6 +473,18 @@ section[data-testid="stSidebar"] .st-key-sidebar_expand_btn button {
     padding: 0.55rem 0.6rem !important;
     border-radius: 9px !important;
     box-shadow: none !important;
+}
+/* FIX: text-align/justify-content on the button itself weren't enough —
+   Streamlit renders the button's label inside a nested
+   [data-testid="stMarkdownContainer"] > p, which carries its own
+   center-aligned default and was winning over the outer button's
+   text-align. Forcing left-align (and full width so there's room to
+   actually sit left) on that inner element is what actually moves
+   "History"/"Logout" to the left instead of the middle. */
+[data-testid="stPopoverBody"] .stButton button p,
+[data-testid="stPopoverBody"] .stButton button div {
+    text-align: left !important;
+    width: 100%;
 }
 [data-testid="stPopoverBody"] .stButton button:hover {
     background: rgba(139, 92, 246, 0.12) !important;
