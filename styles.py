@@ -297,9 +297,55 @@ section[data-testid="stSidebar"] .st-key-sidebar_expand_btn button {
    ========================================================================= */
 .st-key-app_header_bar {
     background: transparent;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
     padding: 0.9rem 0.5rem;
     margin-bottom: 1rem;
+    position: relative;
+}
+/* =========================================================================
+   Avatar trigger: circle avatar + separate chevron, both inside a
+   rounded "pill" — matching the approved mockup. This time done more
+   carefully than before: `display: inline-flex` is applied ONLY to
+   the outer [data-testid="stPopover"] container (a real box with real
+   dimensions — safe, doesn't break Streamlit's position measurement).
+   We do NOT use `display: contents` on the inner wrapper div anymore —
+   that was the actual change that broke the dropdown's positioning
+   last time (it removes the element's box entirely, so
+   getBoundingClientRect() returned nothing usable). Leaving that inner
+   div's own display untouched keeps positioning fully stable while
+   still giving us the pill look via simple flex + background/border/
+   radius on the outer element.
+   ========================================================================= */
+[data-testid="stPopover"] {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    background: #15111f;
+    border: 1px solid #29233b;
+    border-radius: 999px;
+    padding: 5px 16px 5px 5px;
+    margin-right: -0.4rem;
+}
+[data-testid="stPopover"]::after {
+    content: "▾";
+    color: #8d87a3;
+    font-size: 10px;
+    line-height: 1;
+    pointer-events: none;
+}
+/* FIX: a plain border-bottom on this element only spans the padded
+   block-container width, not the full page. This pseudo-element
+   breaks out to 100vw and re-centers itself so the separator line
+   touches the true left and right edges of the browser window,
+   matching the reference mockup. */
+.st-key-app_header_bar::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100vw;
+    height: 1px;
+    background: rgba(255, 255, 255, 0.06);
 }
 
 .fnd-header-brand {
@@ -316,26 +362,29 @@ section[data-testid="stSidebar"] .st-key-sidebar_expand_btn button {
     flex-shrink: 0;
 }
 
-/* The account avatar is an st.popover trigger button — style it as a
-   plain circle with the user's initial, no rectangle/card chrome. */
+/* Avatar circle button itself — plain, bold initial, no icon overlap. */
+[data-testid="stPopover"] button svg,
+[data-testid="stPopover"] button [data-baseweb="icon"] {
+    display: none !important;
+}
 [data-testid="stPopover"] button {
     width: 34px !important;
     height: 34px !important;
     min-height: 0 !important;
     padding: 0 !important;
+    margin: 0 !important;
     border-radius: 50% !important;
-    background: #7c3aed !important;
+    background: linear-gradient(135deg, #8b5cf6, #6d28d9) !important;
     border: none !important;
     color: #fff !important;
     font-weight: 700 !important;
-    font-size: 0.78rem !important;
+    font-size: 0.85rem !important;
     display: flex !important;
     align-items: center;
     justify-content: center;
-    transition: background 0.15s ease, transform 0.15s ease;
+    transition: transform 0.15s ease;
 }
 [data-testid="stPopover"] button:hover {
-    background: #8b5cf6 !important;
     transform: scale(1.05);
 }
 
@@ -346,8 +395,8 @@ section[data-testid="stSidebar"] .st-key-sidebar_expand_btn button {
    styled as a destructive action.
    ========================================================================= */
 [data-testid="stPopoverBody"] {
-    background: #14141f !important;
-    border: 1px solid #23232f !important;
+    background: #15111f !important;
+    border: 1px solid #29233b !important;
     border-radius: 14px !important;
     box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45) !important;
     min-width: 230px !important;
@@ -356,7 +405,7 @@ section[data-testid="stSidebar"] .st-key-sidebar_expand_btn button {
 
 .fnd-account-header {
     padding: 0.6rem 0.7rem 0.75rem;
-    border-bottom: 1px solid #23232f;
+    border-bottom: 1px solid #29233b;
     margin-bottom: 0.3rem;
 }
 .fnd-account-name {
@@ -371,8 +420,21 @@ section[data-testid="stSidebar"] .st-key-sidebar_expand_btn button {
 }
 .fnd-account-divider {
     height: 1px;
-    background: #23232f;
+    background: #29233b;
     margin: 0.3rem 0.2rem;
+}
+
+/* FIX: excessive gap between the History row and the Logout row.
+   Streamlit wraps each st.button in its own element-container with a
+   default vertical gap/margin meant for full-page layouts, which
+   looked huge inside this small popover. Tightening the vertical
+   block gap and zeroing each element-container's own margin fixes
+   the spacing without touching the divider's own margin above. */
+[data-testid="stPopoverBody"] [data-testid="stVerticalBlock"] {
+    gap: 0.1rem !important;
+}
+[data-testid="stPopoverBody"] [data-testid="element-container"] {
+    margin: 0 !important;
 }
 
 /* Restyle the History / Logout st.button rows inside the popover from
