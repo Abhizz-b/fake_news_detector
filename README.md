@@ -1,104 +1,104 @@
-# 🔍 AI虚假新闻检测器 (AI Fake News Detector)
+# 🔍 AI Fake News Detector
 
-一个基于事实核查的智能新闻验证系统，支持多语言、多模型提供商，使用先进的语义嵌入技术和大型语言模型进行准确的事实核查。
+An intelligent news verification system based on fact-checking, supporting multiple languages and multiple model providers, using advanced semantic embedding technology and large language models for accurate fact-checking.
 
 [![Python Version](https://img.shields.io/badge/python-3.12+-blue.svg)](https://python.org)
 [![Streamlit](https://img.shields.io/badge/streamlit-1.43+-red.svg)](https://streamlit.io)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
-![应用截图](docs/images/screenshot.png)
+![App Screenshot](docs/images/screenshot.png)
 
-## ✨ 核心特性
+## ✨ Core Features
 
-### 🌍 多语言支持
-- **智能语言检测**：自动识别中文、英文、日文、韩文输入
-- **多语言输出**：支持用户自定义输出语言或自动检测
-- **本地化界面**：完整的中英文界面支持
+### 🌍 Multilingual Support
+- **Intelligent Language Detection**: Automatically recognizes Chinese, English, Japanese, and Korean input
+- **Multilingual Output**: Supports user-defined output language or automatic detection
+- **Localized Interface**: Full Chinese and English interface support
 
-### 🤖 多模型提供商支持
-- **Ollama**：本地部署模型（默认：GPT-OSS 120B Cloud + Nomic Embed）
-- **LM Studio**：本地模型服务
-- **OpenAI**：官方 GPT 系列模型
-- **自定义API**：兼容 OpenAI 格式的任意模型服务
+### 🤖 Multi-Provider Model Support
+- **Ollama**: Locally deployed models (default: GPT-OSS 120B Cloud + Nomic Embed)
+- **LM Studio**: Local model service
+- **OpenAI**: Official GPT series models
+- **Custom API**: Any model service compatible with the OpenAI format
 
-### 🔍 高精度事实核查
-- **声明提取**：智能提取新闻核心可验证声明
-- **多源搜索**：支持 SearXNG、DuckDuckGo 等搜索引擎
-- **语义匹配**：使用先进嵌入模型计算证据相关性
-- **推理透明**：提供详细的推理过程和证据来源
+### 🔍 High-Precision Fact-Checking
+- **Claim Extraction**: Intelligently extracts core verifiable claims from news
+- **Multi-Source Search**: Supports search engines such as SearXNG and DuckDuckGo
+- **Semantic Matching**: Uses advanced embedding models to calculate evidence relevance
+- **Transparent Reasoning**: Provides detailed reasoning processes and evidence sources
 
-### 📊 完整的数据管理
-- **历史记录**：保存和查看所有事实核查历史
-- **PDF导出**：生成专业的核查报告
-- **用户系统**：支持多用户独立使用
+### 📊 Complete Data Management
+- **History**: Save and view all fact-checking history
+- **PDF Export**: Generate professional fact-check reports
+- **User System**: Supports independent use by multiple users
 
-## 🚀 快速开始
+## 🚀 Quick Start
 
-### 前提条件
+### Prerequisites
 
 - **Python 3.12+**
-- **Ollama** (推荐) 或其他兼容 OpenAI API 的模型服务
-- **SearXNG** (可选，用于搜索功能)
+- **Ollama** (recommended) or another OpenAI-API-compatible model service
+- **SearXNG** (optional, for search functionality)
 
-### 安装步骤
+### Installation Steps
 
-1. **克隆仓库**
+1. **Clone the repository**
 ```bash
 git clone https://github.com/CaptainYifei/fake-news-detector.git
 cd fake-news-detector
 ```
 
-2. **安装依赖**
+2. **Install dependencies**
 ```bash
 pip install -r requirements.txt
 ```
 
-3. **配置模型服务** (推荐使用 Ollama)
+3. **Configure the model service** (Ollama recommended)
 ```bash
-# 安装 Ollama
+# Install Ollama
 curl -fsSL https://ollama.com/install.sh | sh
 
-# 拉取推荐模型
+# Pull the recommended models
 ollama pull gpt-oss:120b-cloud
 ollama pull nomic-embed-text:latest
 ```
 
-4. **配置搜索服务** (可选)
+4. **Configure the search service** (optional)
 ```bash
-# 使用 Docker 启动 SearXNG
+# Start SearXNG using Docker
 docker run -d -p 8090:8080 searxng/searxng
 ```
 
-### 启动应用
+### Launch the Application
 
 ```bash
 streamlit run app.py
 ```
 
-应用将在 http://localhost:8501 启动
+The application will start at http://localhost:8501
 
-## 📋 项目结构
+## 📋 Project Structure
 
 ```
 fake-news-detector/
-├── app.py                 # Streamlit 主应用
-├── fact_checker.py        # 事实核查核心逻辑
-├── model_manager.py       # 模型管理和配置
-├── model_config.json      # 模型和服务配置文件
-├── auth.py                # 用户认证系统
-├── db_utils.py            # 数据库操作
-├── pdf_export.py          # PDF 报告生成
-├── requirements.txt       # 项目依赖
-├── api.py                 # RESTful API 接口
-├── docs/                  # 文档和使用说明
-└── test/                  # 测试文件
+├── app.py                 # Main Streamlit application
+├── fact_checker.py        # Core fact-checking logic
+├── model_manager.py       # Model management and configuration
+├── model_config.json      # Model and service configuration file
+├── auth.py                # User authentication system
+├── db_utils.py            # Database operations
+├── pdf_export.py          # PDF report generation
+├── requirements.txt       # Project dependencies
+├── api.py                 # RESTful API interface
+├── docs/                  # Documentation and usage instructions
+└── test/                  # Test files
 ```
 
-## ⚙️ 配置说明
+## ⚙️ Configuration Guide
 
-### 模型配置 (`model_config.json`)
+### Model Configuration (`model_config.json`)
 
-系统通过 `model_config.json` 进行统一配置，支持：
+The system is configured centrally through `model_config.json`, supporting:
 
 ```json
 {
@@ -131,115 +131,115 @@ fake-news-detector/
 }
 ```
 
-### 搜索引擎配置
+### Search Engine Configuration
 
-支持多种搜索引擎，可在配置文件中设置：
-- **SearXNG**: 本地部署的隐私搜索引擎
-- **DuckDuckGo**: 在线搜索（支持代理配置）
+Multiple search engines are supported and can be set in the configuration file:
+- **SearXNG**: A locally deployed privacy-focused search engine
+- **DuckDuckGo**: Online search (proxy configuration supported)
 
-## 🔄 工作流程
+## 🔄 Workflow
 
-1. **声明提取** - 使用 LLM 从输入文本提取核心声明
-2. **证据搜索** - 通过搜索引擎获取相关网络证据
-3. **语义排序** - 使用嵌入模型计算证据相关性
-4. **事实判断** - 基于证据进行 TRUE/FALSE/PARTIALLY TRUE 判断
-5. **结果呈现** - 提供详细推理过程和证据来源
+1. **Claim Extraction** - Uses an LLM to extract core claims from the input text
+2. **Evidence Search** - Retrieves relevant web evidence via search engines
+3. **Semantic Ranking** - Uses an embedding model to calculate evidence relevance
+4. **Fact Judgment** - Makes a TRUE/FALSE/PARTIALLY TRUE determination based on the evidence
+5. **Result Presentation** - Provides a detailed reasoning process and evidence sources
 
-## 🌐 多语言支持
+## 🌐 Multilingual Support
 
-- **自动检测**: 根据输入文本自动选择合适的语言模板
-- **手动选择**: 用户可指定输出语言（中/英/日/韩）
-- **智能切换**: 基于 Unicode 字符模式的语言识别
+- **Automatic Detection**: Automatically selects the appropriate language template based on the input text
+- **Manual Selection**: Users can specify the output language (Chinese/English/Japanese/Korean)
+- **Intelligent Switching**: Language recognition based on Unicode character patterns
 
-## 📖 使用说明
+## 📖 Usage Instructions
 
-### Web 界面使用
+### Using the Web Interface
 
-1. 选择模型提供商和具体模型
-2. 配置搜索引擎和输出语言
-3. 输入需要核查的新闻内容
-4. 查看实时处理进度和最终结果
-5. 导出 PDF 报告或查看历史记录
+1. Select the model provider and specific model
+2. Configure the search engine and output language
+3. Enter the news content to be fact-checked
+4. View real-time processing progress and the final result
+5. Export a PDF report or view history
 
-### API 接口使用
+### Using the API Interface
 
 ```bash
-# 启动 API 服务
+# Start the API service
 python api.py
 
-# 发送核查请求
+# Send a fact-check request
 curl -X POST http://localhost:5000/fact-check \
   -H "Content-Type: application/json" \
-  -d '{"text": "需要核查的新闻内容"}'
+  -d '{"text": "News content to be fact-checked"}'
 ```
 
-详细 API 文档请参见 `docs/api_doc.html`
+For detailed API documentation, see `docs/api_doc.html`
 
-## 🛠️ 开发指南
+## 🛠️ Development Guide
 
-### 环境设置
+### Environment Setup
 
 ```bash
-# 开发环境安装
+# Install the development environment
 pip install -r requirements.txt
 
-# 运行测试
+# Run tests
 python -m pytest test/
 
-# 启动开发服务器
+# Start the development server
 streamlit run app.py --server.runOnSave true
 ```
 
-### 贡献代码
+### Contributing Code
 
-1. Fork 此仓库
-2. 创建特性分支 (`git checkout -b feature/amazing-feature`)
-3. 提交更改 (`git commit -m 'Add amazing feature'`)
-4. 推送到分支 (`git push origin feature/amazing-feature`)
-5. 创建 Pull Request
+1. Fork this repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Create a Pull Request
 
-## 📝 更新日志
+## 📝 Changelog
 
-### v2.0.0 (最新版本)
-- ✨ 新增多语言支持 (中/英/日/韩)
-- 🔧 统一模型管理系统
-- 🌐 支持多搜索引擎 (SearXNG/DuckDuckGo)
-- 📱 改进用户界面和交互体验
-- 🛡️ 增强错误处理和配置管理
-- 📄 完善 PDF 导出功能
+### v2.0.0 (Latest)
+- ✨ Added multilingual support (Chinese/English/Japanese/Korean)
+- 🔧 Unified model management system
+- 🌐 Support for multiple search engines (SearXNG/DuckDuckGo)
+- 📱 Improved user interface and interaction experience
+- 🛡️ Enhanced error handling and configuration management
+- 📄 Improved PDF export functionality
 
 ### v1.0.0
-- 🎉 初始版本发布
-- ✅ 基础事实核查功能
-- 👤 用户认证系统
-- 💾 数据持久化存储
+- 🎉 Initial release
+- ✅ Basic fact-checking functionality
+- 👤 User authentication system
+- 💾 Persistent data storage
 
-## 🐛 故障排除
+## 🐛 Troubleshooting
 
-### 常见问题
+### FAQ
 
-**Q: 模型无响应或返回空结果**
-A: 检查模型服务是否正常运行，确认 API 地址和端口配置正确
+**Q: The model is unresponsive or returns empty results**
+A: Check whether the model service is running normally, and confirm that the API address and port are configured correctly
 
-**Q: 搜索功能无法使用**
-A: 检查网络连接，确认搜索引擎服务状态，必要时配置代理
+**Q: The search function doesn't work**
+A: Check your network connection, confirm the search engine service status, and configure a proxy if necessary
 
-**Q: 多语言输出异常**
-A: 确认使用的模型支持目标语言，尝试切换到更强的模型
+**Q: Multilingual output is behaving abnormally**
+A: Confirm that the model in use supports the target language, and try switching to a more capable model
 
-更多问题请查看 [Issues](https://github.com/CaptainYifei/fake-news-detector/issues) 或提交新的问题报告。
+For more issues, please see [Issues](https://github.com/CaptainYifei/fake-news-detector/issues) or submit a new issue report.
 
-## 📄 许可证
+## 📄 License
 
-本项目采用 MIT 许可证 - 详情请参阅 [LICENSE](LICENSE) 文件
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details
 
-## 🔗 相关链接
+## 🔗 Related Links
 
 - **GitHub**: [https://github.com/CaptainYifei/fake-news-detector](https://github.com/CaptainYifei/fake-news-detector)
 - **Gitee**: [https://gitee.com/love2eat/fake-news-detector](https://gitee.com/love2eat/fake-news-detector)
-- **文档**: [docs/usage.md](docs/usage.md)
-- **API文档**: [docs/api_doc.html](docs/api_doc.html)
+- **Documentation**: [docs/usage.md](docs/usage.md)
+- **API Documentation**: [docs/api_doc.html](docs/api_doc.html)
 
 ---
 
-⭐ 如果这个项目对你有帮助，请给我们一个 Star！
+⭐ If this project helps you, please give us a Star!
