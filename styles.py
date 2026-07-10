@@ -9,7 +9,9 @@ CSS = """
 <style>
 /* ---------- Global ---------- */
 .stApp {
-    background-color: #0b0b14;
+    background:
+        radial-gradient(ellipse 900px 480px at 50% -8%, rgba(139, 92, 246, 0.16), transparent 60%),
+        #0b0b14;
 }
 #MainMenu {visibility: hidden;}
 footer {visibility: hidden;}
@@ -29,6 +31,14 @@ footer {visibility: hidden;}
     display: none !important;
 }
 [data-testid="stDecoration"] {
+    display: none !important;
+}
+/* FIX: Streamlit auto-adds a small anchor/link icon next to any
+   h1-h6 it renders (even inside raw unsafe_allow_html HTML like our
+   hero heading) — this was the stray chain-link icon floating next
+   to "Verify everything." Hiding it globally since we don't use
+   deep-linkable headers anywhere in this app. */
+[data-testid="stHeaderActionElements"] {
     display: none !important;
 }
 
@@ -276,6 +286,20 @@ section[data-testid="stSidebar"] .st-key-sidebar_expand_btn button {
    avatar (rendered via st.popover in components.py) that opens a small
    History/Logout menu on click — there's no persistent nav rail anymore.
    ========================================================================= */
+/* =========================================================================
+   NEW: Navbar container — wraps the header row (brand + account menu)
+   so it reads as a proper nav bar: a shade lighter than the page
+   background, edge-to-edge padding, and a thin bottom divider line
+   matching the approved mockup (rather than blending into the body
+   with no separation).
+   ========================================================================= */
+.st-key-app_header_bar {
+    background: #0e0c18;
+    border-bottom: 1px solid #201c2e;
+    padding: 0.9rem 0.5rem;
+    margin-bottom: 1rem;
+}
+
 .fnd-header-brand {
     display: flex;
     align-items: center;
@@ -312,9 +336,67 @@ section[data-testid="stSidebar"] .st-key-sidebar_expand_btn button {
     background: #8b5cf6 !important;
     transform: scale(1.05);
 }
+
+/* =========================================================================
+   NEW: Account dropdown card — matches the approved mockup: rounded
+   card, name + role header block, thin dividers, and quiet icon-prefixed
+   rows for History/Logout, with Logout styled as a destructive action.
+   ========================================================================= */
 [data-testid="stPopoverBody"] {
     background: #14141f !important;
     border: 1px solid #23232f !important;
+    border-radius: 14px !important;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45) !important;
+    min-width: 230px !important;
+    padding: 0.5rem !important;
+}
+
+.fnd-account-header {
+    padding: 0.5rem 0.6rem 0.7rem;
+    border-bottom: 1px solid #23232f;
+    margin-bottom: 0.3rem;
+}
+.fnd-account-name {
+    font-weight: 700;
+    font-size: 0.92rem;
+    color: #f3f1f9;
+}
+.fnd-account-role {
+    font-size: 0.78rem;
+    color: #8a8aa3;
+    margin-top: 0.1rem;
+}
+.fnd-account-divider {
+    height: 1px;
+    background: #23232f;
+    margin: 0.3rem 0.2rem;
+}
+
+/* Restyle the History / Logout st.button rows inside the popover from
+   generic Streamlit buttons into quiet, left-aligned menu items. */
+[data-testid="stPopoverBody"] .stButton button {
+    background: transparent !important;
+    border: none !important;
+    color: #cfcfe0 !important;
+    font-weight: 500 !important;
+    text-align: left !important;
+    justify-content: flex-start !important;
+    padding: 0.55rem 0.6rem !important;
+    border-radius: 9px !important;
+    box-shadow: none !important;
+}
+[data-testid="stPopoverBody"] .stButton button:hover {
+    background: rgba(139, 92, 246, 0.12) !important;
+    color: #fff !important;
+}
+/* Logout row styled as a destructive action, matching the approved
+   mockup's red logout item. */
+.st-key-account_menu_logout_btn button {
+    color: #f87171 !important;
+}
+.st-key-account_menu_logout_btn button:hover {
+    background: rgba(248, 113, 113, 0.1) !important;
+    color: #f87171 !important;
 }
 
 /* =========================================================================
@@ -330,9 +412,9 @@ section[data-testid="stSidebar"] .st-key-sidebar_expand_btn button {
     display: flex !important;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
-    min-height: 62vh;
-    padding: 2rem 0;
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 4rem 2rem 2rem;
 }
 .fnd-hero-minimal {
     text-align: center;
@@ -340,32 +422,62 @@ section[data-testid="stSidebar"] .st-key-sidebar_expand_btn button {
     animation: fndFadeUp 0.5s ease-out both;
 }
 .fnd-hero-minimal h1 {
-    font-size: 2.7rem;
+    font-size: 3.4rem;
     font-weight: 800;
-    line-height: 1.28;
+    line-height: 1.12;
+    letter-spacing: -0.02em;
     margin-bottom: 0.4rem;
-    color: rgba(243, 241, 249, 0.68);
+}
+.fnd-hero-minimal .muted-line {
+    color: #9d97b3;
 }
 .fnd-hero-minimal .accent {
-    color: rgba(167, 139, 250, 0.68);
+    background: linear-gradient(90deg, #8b5cf6, #c4b5fd);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
 }
 .fnd-hero-minimal p {
-    color: #75758c;
-    font-size: 0.98rem;
+    color: #8d87a3;
+    font-size: 1rem;
     line-height: 1.7;
-    max-width: 420px;
+    max-width: 520px;
     margin: 1rem auto 0;
+}
+
+/* The claim textarea + quick-action pills + Clear/Check Now row all
+   live inside this shell, capped at the same 880px the mockup uses —
+   this (not a per-widget max-width) is what controls the box's width,
+   so it stays wide and spacious instead of looking cramped. */
+.st-key-claim_shell {
+    width: 100%;
+    max-width: 880px;
+}
+
+/* Quick-action pills below the claim textarea — three equal-width
+   buttons restyled from generic Streamlit buttons into rounded outline
+   pills, matching the approved mockup. */
+[class*="quick_pill"] button {
+    background: #0f0c1a !important;
+    border: 1px solid #2a2a3a !important;
+    color: #8d87a3 !important;
+    border-radius: 12px !important;
+    font-weight: 500 !important;
+    font-size: 0.85rem !important;
+    padding: 0.75rem 1rem !important;
+    transition: all 0.2s ease;
+}
+[class*="quick_pill"] button:hover {
+    border-color: #8b5cf6 !important;
+    color: #f3f1f9 !important;
+    background: rgba(139, 92, 246, 0.12) !important;
 }
 
 /* Minimal home page: the single claim/article box (headline or full
    article — same field), with a soft purple glow border */
-.st-key-claim_input_box {
-    width: 100%;
-    max-width: 540px;
-}
 .st-key-claim_input_box textarea {
     border-radius: 12px !important;
-    border: 1px solid #3a2f6a !important;
+    border: 1px solid #29233b !important;
     background: #14141f !important;
     color: #f3f1f9 !important;
     font-size: 0.9rem !important;

@@ -23,19 +23,28 @@ def verdict_meta(verdict: str) -> dict:
 # ---------------------------------------------------------------------------
 def render_account_menu(username: str):
     """Minimal top-right account control: a plain circular avatar button
-    that opens a small popover with History / Logout. Replaces the old
-    full-height sidebar entirely — there's no persistent nav rail anymore,
-    just this one control plus the brand mark rendered alongside it by
-    render_header() below.
+    that opens a small popover dropdown — styled to match the approved
+    mockup: name + role header up top, a divider, then icon-prefixed
+    History and Logout rows (Logout styled as a destructive/red action).
     """
     clicked = None
     with st.popover(username[:1].upper() if username else "?"):
-        st.markdown(f"**{username}**")
-        st.caption("Student")
-        st.divider()
-        if st.button("History", key="account_menu_history_btn", use_container_width=True):
+        st.markdown(
+            f"""
+            <div class="fnd-account-header">
+                <div class="fnd-account-name">{username}</div>
+                <div class="fnd-account-role">Student</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+        if st.button("🕒  History", key="account_menu_history_btn", use_container_width=True):
             clicked = "history"
-        if st.button("Logout", key="account_menu_logout_btn", use_container_width=True):
+
+        st.markdown("<div class='fnd-account-divider'></div>", unsafe_allow_html=True)
+
+        if st.button("↪  Logout", key="account_menu_logout_btn", use_container_width=True):
             clicked = "logout"
     return clicked
 
@@ -43,25 +52,30 @@ def render_account_menu(username: str):
 def render_header(username: str):
     """Slim top header replacing the sidebar: a simple search-glass icon
     + wordmark on the left, and the circular account avatar (with its
-    History/Logout popover) on the right. Returns 'history', 'logout',
-    or None depending on what the person clicked in the account menu.
+    History/Logout popover) on the right. Wrapped in a styled container
+    so it reads as a proper navbar — slightly lighter than the page
+    background with a thin bottom divider — instead of blending into
+    the body. Returns 'history', 'logout', or None depending on what
+    the person clicked in the account menu.
     """
-    left, right = st.columns([6, 1], vertical_alignment="center")
-    with left:
-        st.markdown(
-            """
-            <div class="fnd-header-brand">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <circle cx="11" cy="11" r="7"></circle>
-                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                </svg>
-                <span>Fake News Detector</span>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-    with right:
-        clicked = render_account_menu(username)
+    clicked = None
+    with st.container(key="app_header_bar"):
+        left, right = st.columns([6, 1], vertical_alignment="center")
+        with left:
+            st.markdown(
+                """
+                <div class="fnd-header-brand">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="11" cy="11" r="7"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                    <span>Fake News Detector</span>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+        with right:
+            clicked = render_account_menu(username)
     return clicked
 
 
@@ -73,29 +87,10 @@ def render_header(username: str):
 def render_sidebar(active_page: str, username: str):
     """Renders logo + collapse toggle, nav buttons, and user card.
     Returns the page the user clicked on (or None if no click happened).
-
-    FIX: collapsing no longer hides the sidebar completely (display:none).
-    Instead, when collapsed, the sidebar is shrunk to a narrow strip (see
-    app.py) that shows ONLY the expand button, rendered here in its normal
-    place inside the sidebar. This replaces the old approach of hiding the
-    sidebar and floating a separate button in the main content area via a
-    fragile CSS selector — if that selector didn't match (which depends on
-    Streamlit version/DOM structure), the button silently lost its style
-    and became invisible/undiscoverable. Now the button is guaranteed to
-    render somewhere sensible even with zero custom CSS applied.
-
-    FIX 2: collapse button and expand button now use matching chevron
-    glyphs ("«" collapses, "»" expands) instead of two visually unrelated
-    icons ("⟨⟨" vs "☰"). Combined with the shared CSS rule in styles.py
-    (`.st-key-sidebar_expand_btn button, .st-key-sidebar_collapse_btn
-    button { ... }`), both buttons now look and animate identically —
-    only the arrow direction changes to indicate what the click will do.
     """
     clicked = None
     with st.sidebar:
         if not st.session_state.get("sidebar_open", True):
-            # Collapsed view: just the expand button, centered in the
-            # narrow strip.
             st.markdown("<div style='height:0.4rem'></div>", unsafe_allow_html=True)
             if st.button("»", key="sidebar_expand_btn", help="Show sidebar"):
                 st.session_state.sidebar_open = True
@@ -156,15 +151,6 @@ def render_how_it_works():
         ("3", "Get the verdict", "See result with evidence & reasoning"),
     ]
 
-    # FIX: all step rows + the quote block are now assembled as single
-    # lines with NO leading whitespace before being joined together.
-    # The previous version built this via an indented multi-line
-    # f-string, which (once combined across the loop) produced lines
-    # starting with 4+ spaces — and Markdown treats any line indented
-    # 4+ spaces as a preformatted code block. That's what caused the
-    # raw HTML/SVG source to show up as literal text on the page
-    # instead of being rendered. Keeping every line flush-left avoids
-    # tripping that rule.
     steps_html = ""
     for i, (num, title, subtitle) in enumerate(steps):
         is_last = i == len(steps) - 1

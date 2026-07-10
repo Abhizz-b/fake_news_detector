@@ -472,41 +472,64 @@ def estimate_confidence(verdict: str, evidence_count: int) -> int:
 
 # ===========================================================================
 # ---- HOME PAGE ----
-# Redesigned to be a minimal, centered "Think Twice. Verify Everything."
-# layout: hero copy, a single-line headline/claim search bar, a larger
-# drop-zone-style textarea for full articles/posts, and Clear / Check Now
-# actions underneath. The old two-column layout (with "How it works" /
-# "Powered by" side cards) is no longer used on the home page — those
-# components still exist in components.py untouched, in case they're
-# wanted elsewhere later.
+# Rebuilt to match the approved HTML mockup exactly:
+#   - hero copy in sentence case ("Think twice." / "Verify everything.")
+#   - claim textarea
+#   - three quick-action pills underneath (Try a headline / Paste a URL /
+#     Check a viral claim) — clicking one fills the box with a sample so
+#     first-time visitors can see how the checker behaves immediately
+#   - a right-hugging Clear / Check Now button pair (not full-width),
+#     matching the mockup's flex-end action row
 # ===========================================================================
 
+SAMPLE_HEADLINE = "NASA confirms discovery of a second moon orbiting Earth"
+SAMPLE_URL = "https://example-news-site.com/breaking-story"
+SAMPLE_VIRAL_CLAIM = "Drinking bleach cures COVID-19"
+
+
 def render_home_page():
-    spacer_l, center, spacer_r = st.columns([1, 2.4, 1])
+    with st.container(key="home_center_wrap"):
+        st.markdown(
+            """
+            <div class="fnd-hero-minimal">
+                <h1><span class="muted-line">Think twice.</span><br/><span class="accent">Verify everything.</span></h1>
+                <p>Paste any news, headline, or claim — our AI cross-checks it against live web sources and tells you what's real.</p>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
 
-    with center:
-        with st.container(key="home_center_wrap"):
-            st.markdown(
-                """
-                <div class="fnd-hero-minimal">
-                    <h1>Think Twice.<br/><span class="accent">Verify Everything.</span></h1>
-                    <p>Paste any news, headline, or claim and our AI will fact-check it using trusted sources.</p>
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
-
+        with st.container(key="claim_shell"):
             claim_input = st.text_area(
                 "Claim input",
                 placeholder="Paste a headline, article, or claim...",
-                height=140,
+                height=150,
                 label_visibility="collapsed",
                 key="claim_input_box",
             )
 
-            st.markdown("<div style='height:1rem'></div>", unsafe_allow_html=True)
+            # Quick-action pills — same row, equal width, matching the
+            # mockup's three flex:1 pills side by side.
+            p1, p2, p3 = st.columns(3, gap="small")
+            with p1:
+                if st.button("📰  Try a headline", use_container_width=True, key="quick_pill_headline"):
+                    st.session_state.claim_input_box = SAMPLE_HEADLINE
+                    st.rerun()
+            with p2:
+                if st.button("🔗  Paste a URL", use_container_width=True, key="quick_pill_url"):
+                    st.session_state.claim_input_box = SAMPLE_URL
+                    st.rerun()
+            with p3:
+                if st.button("🌐  Check a viral claim", use_container_width=True, key="quick_pill_viral"):
+                    st.session_state.claim_input_box = SAMPLE_VIRAL_CLAIM
+                    st.rerun()
 
-            c1, c2 = st.columns([1, 1.5])
+            st.markdown("<div style='height:1.1rem'></div>", unsafe_allow_html=True)
+
+            # Action row — a wide spacer column pushes Clear + Check Now
+            # to the right edge, matching the mockup's flex-end row
+            # instead of stretching them full-width across the card.
+            spacer, c1, c2 = st.columns([3, 1, 1.3])
             with c1:
                 if st.button("Clear", use_container_width=True, key="clear_home_btn"):
                     st.session_state.claim_input_box = ""
@@ -522,11 +545,11 @@ def render_home_page():
                 else:
                     st.warning("Please paste a headline or claim first.")
 
-            st.markdown("<div style='height:1rem'></div>", unsafe_allow_html=True)
-            st.info(
-                "This is a student project demo using free-tier AI models. "
-                "Please verify important claims through official sources."
-            )
+        st.markdown("<div style='height:1rem'></div>", unsafe_allow_html=True)
+        st.info(
+            "This is a student project demo using free-tier AI models. "
+            "Please verify important claims through official sources."
+        )
 
 
 def run_fact_check(user_input: str):
