@@ -287,15 +287,17 @@ section[data-testid="stSidebar"] .st-key-sidebar_expand_btn button {
    History/Logout menu on click — there's no persistent nav rail anymore.
    ========================================================================= */
 /* =========================================================================
-   NEW: Navbar container — wraps the header row (brand + account menu)
-   so it reads as a proper nav bar: a shade lighter than the page
-   background, edge-to-edge padding, and a thin bottom divider line
-   matching the approved mockup (rather than blending into the body
-   with no separation).
+   FIX: Navbar container — previously had its own solid background
+   (#0e0c18), which read as a separate "search bar" card floating on
+   top of the page instead of a proper header. Now it's fully
+   transparent (matches the page background exactly, since it's the
+   same stack the .stApp gradient/base-color sits on), and the only
+   separation from the hero content below is a single, very
+   low-opacity 1px line — matching the approved mockup exactly.
    ========================================================================= */
 .st-key-app_header_bar {
-    background: #0e0c18;
-    border-bottom: 1px solid #201c2e;
+    background: transparent;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
     padding: 0.9rem 0.5rem;
     margin-bottom: 1rem;
 }
@@ -339,8 +341,9 @@ section[data-testid="stSidebar"] .st-key-sidebar_expand_btn button {
 
 /* =========================================================================
    NEW: Account dropdown card — matches the approved mockup: rounded
-   card, name + role header block, thin dividers, and quiet icon-prefixed
-   rows for History/Logout, with Logout styled as a destructive action.
+   card, name + role header block, thin dividers, and quiet plain-text
+   rows for History/Logout (no icons — see components.py), with Logout
+   styled as a destructive action.
    ========================================================================= */
 [data-testid="stPopoverBody"] {
     background: #14141f !important;
@@ -352,19 +355,19 @@ section[data-testid="stSidebar"] .st-key-sidebar_expand_btn button {
 }
 
 .fnd-account-header {
-    padding: 0.5rem 0.6rem 0.7rem;
+    padding: 0.6rem 0.7rem 0.75rem;
     border-bottom: 1px solid #23232f;
     margin-bottom: 0.3rem;
 }
 .fnd-account-name {
     font-weight: 700;
-    font-size: 0.92rem;
+    font-size: 0.9rem;
     color: #f3f1f9;
 }
 .fnd-account-role {
     font-size: 0.78rem;
     color: #8a8aa3;
-    margin-top: 0.1rem;
+    margin-top: 0.15rem;
 }
 .fnd-account-divider {
     height: 1px;
@@ -389,12 +392,18 @@ section[data-testid="stSidebar"] .st-key-sidebar_expand_btn button {
     background: rgba(139, 92, 246, 0.12) !important;
     color: #fff !important;
 }
-/* Logout row styled as a destructive action, matching the approved
-   mockup's red logout item. */
-.st-key-account_menu_logout_btn button {
+/* FIX: Logout wasn't rendering red — `[data-testid="stPopoverBody"]
+   .stButton button` above has higher CSS specificity (attribute +
+   class + element = 0,2,1) than the old `.st-key-account_menu_logout_btn
+   button` rule (class + element = 0,1,1), so the generic gray color
+   always won even with !important on both sides (equal !important
+   weight falls back to specificity, not source order). Prefixing with
+   the same [data-testid="stPopoverBody"] attribute selector brings
+   this rule to equal-or-higher specificity so red actually applies. */
+[data-testid="stPopoverBody"] .st-key-account_menu_logout_btn button {
     color: #f87171 !important;
 }
-.st-key-account_menu_logout_btn button:hover {
+[data-testid="stPopoverBody"] .st-key-account_menu_logout_btn button:hover {
     background: rgba(248, 113, 113, 0.1) !important;
     color: #f87171 !important;
 }

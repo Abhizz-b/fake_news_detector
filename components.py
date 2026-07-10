@@ -24,8 +24,11 @@ def verdict_meta(verdict: str) -> dict:
 def render_account_menu(username: str):
     """Minimal top-right account control: a plain circular avatar button
     that opens a small popover dropdown — styled to match the approved
-    mockup: name + role header up top, a divider, then icon-prefixed
+    mockup: name + role header up top, a divider, then plain-text
     History and Logout rows (Logout styled as a destructive/red action).
+    No icons are used for History/Logout — plain text only, to avoid
+    Streamlit's native emoji rendering (colorful, cartoon-ish) clashing
+    with the mockup's clean monochrome look.
     """
     clicked = None
     with st.popover(username[:1].upper() if username else "?"):
@@ -39,12 +42,12 @@ def render_account_menu(username: str):
             unsafe_allow_html=True,
         )
 
-        if st.button("🕒  History", key="account_menu_history_btn", use_container_width=True):
+        if st.button("History", key="account_menu_history_btn", use_container_width=True):
             clicked = "history"
 
         st.markdown("<div class='fnd-account-divider'></div>", unsafe_allow_html=True)
 
-        if st.button("↪  Logout", key="account_menu_logout_btn", use_container_width=True):
+        if st.button("Logout", key="account_menu_logout_btn", use_container_width=True):
             clicked = "logout"
     return clicked
 
@@ -52,11 +55,13 @@ def render_account_menu(username: str):
 def render_header(username: str):
     """Slim top header replacing the sidebar: a simple search-glass icon
     + wordmark on the left, and the circular account avatar (with its
-    History/Logout popover) on the right. Wrapped in a styled container
-    so it reads as a proper navbar — slightly lighter than the page
-    background with a thin bottom divider — instead of blending into
-    the body. Returns 'history', 'logout', or None depending on what
-    the person clicked in the account menu.
+    History/Logout popover) on the right. The bar itself has no distinct
+    background of its own — it blends with the page background, with
+    only a thin, low-opacity bottom divider separating it from the hero
+    content below (matching the approved mockup exactly, instead of
+    looking like a separate "search bar" card). Returns 'history',
+    'logout', or None depending on what the person clicked in the
+    account menu.
     """
     clicked = None
     with st.container(key="app_header_bar"):
