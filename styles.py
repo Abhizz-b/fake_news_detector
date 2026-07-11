@@ -906,6 +906,26 @@ section[data-testid="stSidebar"] .st-key-sidebar_expand_btn button {
 }
 
 /* =========================================================================
+   NEW: "Back to Home" button on results/history-detail pages.
+   FIX: was inheriting the generic .stButton > button[kind="secondary"]
+   hover rule (translateY(-1px) lift), which read as an unwanted
+   floating/moving animation on hover — same class of issue as the old
+   Clear/Check Now hover bug. Same fix pattern here: hover is fully
+   neutralized (no lift, no color/border change) and only :active gets
+   a quick scale-down "press" animation on click.
+   ========================================================================= */
+.st-key-back_to_home_btn button {
+    transition: transform 0.08s ease !important;
+}
+.st-key-back_to_home_btn button:hover {
+    transform: none !important;
+    box-shadow: none !important;
+}
+.st-key-back_to_home_btn button:active {
+    transform: scale(0.96) !important;
+}
+
+/* =========================================================================
    FIX: Themed loading spinner + status alerts.
    Previously st.spinner() rendered as Streamlit's plain default gray
    box, full-width, with no styling — which is what looked "ugly" and

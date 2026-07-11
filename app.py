@@ -662,7 +662,7 @@ def run_fact_check(user_input: str):
 def render_results_page():
     result = st.session_state.get("last_result")
 
-    if st.button("← Back to Home"):
+    if st.button("← Back to Home", key="back_to_home_btn"):
         st.session_state.page = "home"
         st.rerun()
 
@@ -869,7 +869,9 @@ if is_authenticated:
         # the left, circular account avatar on the right). The avatar
         # opens a small popover with History / Logout — no persistent nav
         # rail taking up screen space anymore.
-        nav_click = render_header(username=st.session_state.get("username", "User"))
+        nav_click = None
+        if st.session_state.page == "home":
+            nav_click = render_header(username=st.session_state.get("username", "User"))
 
         if nav_click == "history":
             st.session_state.page = "history"
