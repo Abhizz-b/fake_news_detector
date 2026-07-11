@@ -8,6 +8,21 @@ import streamlit as st
 CSS = """
 <style>
 /* ---------- Global ---------- */
+/* FIX (final): the previous horizontal-scroll fix targeted html/body,
+   but Streamlit's real scrolling container is
+   [data-testid="stAppViewContainer"] / [data-testid="stMain"], not
+   body itself — so overflow-x could still leak through there. Locking
+   overflow-x down on every layer (html, body, stApp, and Streamlit's
+   own view container) closes that gap completely. Background stays
+   only on .stApp so the radial glow doesn't get painted twice by
+   nested containers. */
+html, body,
+.stApp,
+[data-testid="stAppViewContainer"],
+[data-testid="stMain"],
+.main {
+    overflow-x: hidden !important;
+}
 .stApp {
     background:
         radial-gradient(ellipse 900px 480px at 50% -8%, rgba(139, 92, 246, 0.16), transparent 60%),
@@ -46,8 +61,8 @@ footer {visibility: hidden;}
    forcing an extra scroll to see everything. Trimmed to bring the
    header close to the top of the viewport. */
 .block-container {
-    padding-top: 0.6rem;
-    padding-bottom: 2rem;
+    padding-top: 0.4rem;
+    padding-bottom: 1rem;
     animation: fndFadeIn 0.4s ease-out;
 }
 
@@ -331,13 +346,20 @@ section[data-testid="stSidebar"] .st-key-sidebar_expand_btn button {
    breaks out to 100vw and re-centers itself so the separator line
    touches the true left and right edges of the browser window,
    matching the reference mockup. */
+/* FIX (final): this used to break out to width:100vw + translateX(-50%)
+   to touch the true browser edges — but 100vw includes the vertical
+   scrollbar's own width, so on most screens it overflowed a few
+   pixels past the right edge and forced a horizontal scrollbar for
+   the entire page. A plain 100%-width line (spanning its own already
+   full-bleed parent) gives the same visual edge-to-edge separator
+   with zero risk of overflow. */
 .st-key-app_header_bar::after {
     content: "";
     position: absolute;
     bottom: 0;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 100vw;
+    left: 0;
+    right: 0;
+    width: 100%;
     height: 1px;
     background: rgba(255, 255, 255, 0.06);
 }
@@ -345,15 +367,29 @@ section[data-testid="stSidebar"] .st-key-sidebar_expand_btn button {
 .fnd-header-brand {
     display: flex;
     align-items: center;
-    gap: 0.55rem;
+    gap: 0.6rem;
     color: #f3f1f9;
     font-weight: 700;
     font-size: 0.9rem;
     padding-top: 0.4rem;
 }
 .fnd-header-brand svg {
-    color: #cfcfe0;
+    color: #a78bfa;
     flex-shrink: 0;
+}
+/* FIX: the wordmark was plain unstyled text inheriting a generic
+   sans-serif — looked flat and forgettable for an app name/logo.
+   Now it's bolder, larger, tighter letter-spacing, and picks up the
+   same soft purple gradient used on "Verify everything." in the hero,
+   so it reads as an actual brand mark instead of a plain label. */
+.fnd-brand-wordmark {
+    font-size: 1.2rem;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    background: linear-gradient(90deg, #f3f1f9, #c4b5fd);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
 }
 
 /* Avatar circle button itself — plain, bold initial, no icon overlap.
@@ -531,19 +567,30 @@ section[data-testid="stSidebar"] .st-key-sidebar_expand_btn button {
     align-items: center;
     max-width: 1180px;
     margin: 0 auto;
-    padding: 1.4rem 2rem 2rem;
+    padding: 0.4rem 2rem 1rem;
+}
+/* FIX: Streamlit adds its own default vertical gap (~1rem) between
+   every top-level element inside a container — on top of our own
+   margins/spacers — which was the last hidden source of the extra
+   page length forcing a vertical scroll. Scoped to home_center_wrap
+   only, so results/history pages keep their normal breathing room. */
+.st-key-home_center_wrap [data-testid="stVerticalBlock"] {
+    gap: 0.4rem !important;
+}
+.st-key-home_center_wrap [data-testid="element-container"] {
+    margin-bottom: 0 !important;
 }
 .fnd-hero-minimal {
     text-align: center;
-    margin-bottom: 2.6rem;
+    margin-bottom: 0.9rem;
     animation: fndFadeUp 0.5s ease-out both;
 }
 .fnd-hero-minimal h1 {
-    font-size: 3.4rem;
+    font-size: 2.7rem;
     font-weight: 800;
     line-height: 1.12;
     letter-spacing: -0.02em;
-    margin-bottom: 0.4rem;
+    margin-bottom: 0.3rem;
 }
 .fnd-hero-minimal .muted-line {
     color: #9d97b3;
@@ -556,10 +603,10 @@ section[data-testid="stSidebar"] .st-key-sidebar_expand_btn button {
 }
 .fnd-hero-minimal p {
     color: #8d87a3;
-    font-size: 1rem;
-    line-height: 1.7;
+    font-size: 0.95rem;
+    line-height: 1.6;
     max-width: 520px;
-    margin: 1rem auto 0;
+    margin: 0.4rem auto 0;
 }
 
 /* The claim textarea + quick-action pills + Clear/Check Now row all

@@ -524,7 +524,12 @@ def render_home_page():
                     st.session_state.claim_input_box = SAMPLE_VIRAL_CLAIM
                     st.rerun()
 
-            st.markdown("<div style='height:1.1rem'></div>", unsafe_allow_html=True)
+            # FIX: was a 1.1rem spacer, adding unnecessary extra vertical
+            # length to the page on top of the other spacing fixes in
+            # styles.py. Tightened to 0.5rem — still a clear visual gap
+            # between the pills and the Clear/Check Now row, just not a
+            # page-lengthening one.
+            st.markdown("<div style='height:0.5rem'></div>", unsafe_allow_html=True)
 
             # Action row — a wide spacer column pushes Clear + Check Now
             # to the right edge, matching the mockup's flex-end row
@@ -545,7 +550,9 @@ def render_home_page():
                 else:
                     st.warning("Please paste a headline or claim first.")
 
-        st.markdown("<div style='height:1rem'></div>", unsafe_allow_html=True)
+        # FIX: was a 1rem spacer before the disclaimer note — trimmed to
+        # 0.5rem as part of the overall vertical tightening.
+        st.markdown("<div style='height:0.5rem'></div>", unsafe_allow_html=True)
         st.info(
             "This is a student project demo using free-tier AI models. "
             "Please verify important claims through official sources."
