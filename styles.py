@@ -472,7 +472,9 @@ section[data-testid="stSidebar"] .st-key-sidebar_expand_btn button {
 .fnd-account-header {
     padding: 0.6rem 0.7rem 0.75rem;
     border-bottom: 1px solid #29233b;
-    margin-bottom: 0.3rem;
+    margin-bottom: 0.7rem;
+    position: relative;
+    z-index: 2;
 }
 .fnd-account-name {
     font-weight: 700;
@@ -487,7 +489,9 @@ section[data-testid="stSidebar"] .st-key-sidebar_expand_btn button {
 .fnd-account-divider {
     height: 1px;
     background: #29233b;
-    margin: 0.3rem 0.2rem;
+    margin: 0.6rem 0.2rem;
+    position: relative;
+    z-index: 2;
 }
 
 /* FIX: excessive gap between the History row and the Logout row.
@@ -495,9 +499,21 @@ section[data-testid="stSidebar"] .st-key-sidebar_expand_btn button {
    default vertical gap/margin meant for full-page layouts, which
    looked huge inside this small popover. Tightening the vertical
    block gap and zeroing each element-container's own margin fixes
-   the spacing without touching the divider's own margin above. */
+   the spacing without touching the divider's own margin above.
+   FIX (round 2): gap was too tight (0.1rem) — the History button's
+   own hover-highlight box was tall enough to visually overlap/bleed
+   over the header divider and the divider above Logout.
+   FIX (round 3): 0.3rem gap + 0.45rem divider margins were still not
+   quite enough — the History button's hover-highlight box (which
+   extends slightly beyond the button's own text padding, since the
+   whole button element gets the background on hover, not just its
+   inner label) was still visually grazing the header divider above
+   it. Pushed both the header's margin-bottom and each divider's own
+   margin out further (0.7rem / 0.6rem) so there's unambiguous
+   clearance between every divider line and the nearest button's
+   hover box, in both directions. */
 [data-testid="stPopoverBody"] [data-testid="stVerticalBlock"] {
-    gap: 0.1rem !important;
+    gap: 0.35rem !important;
 }
 [data-testid="stPopoverBody"] [data-testid="element-container"] {
     margin: 0 !important;
