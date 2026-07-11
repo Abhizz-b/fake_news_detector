@@ -692,6 +692,45 @@ section[data-testid="stSidebar"] .st-key-sidebar_expand_btn button {
     transform: scale(0.96) !important;
 }
 
+/* =========================================================================
+   NEW: Hero tagline -> status line morph (home page).
+   The idle tagline (<p class="fnd-hero-tagline">) and the loading status
+   line (<div class="fnd-status-line">) are swapped in place inside the
+   same st.empty() placeholder from app.py, so only one is ever in the
+   DOM at a time — the fade-in here is what makes that swap read as a
+   smooth morph instead of an abrupt content jump. This replaces the
+   old st.spinner() boxes + the separate st.info()/st.success() search
+   status boxes that used to stack up below the Check Now button.
+   ========================================================================= */
+.fnd-status-line {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin: 0.4rem auto 0;
+    font-size: 0.95rem;
+    font-weight: 500;
+    animation: fndFadeUp 0.25s ease-out both;
+}
+.fnd-status-text {
+    background: linear-gradient(90deg, #4fc3f7, #a855f7);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+.fnd-spinner {
+    width: 15px;
+    height: 15px;
+    border: 2px solid rgba(139, 92, 246, 0.25);
+    border-top-color: #a855f7;
+    border-radius: 50%;
+    animation: fndSpin 0.7s linear infinite;
+    flex-shrink: 0;
+}
+@keyframes fndSpin {
+    to { transform: rotate(360deg); }
+}
+
 /* ---------- Input card focus glow (results/other pages) ---------- */
 .stTextArea textarea {
     border-radius: 12px !important;

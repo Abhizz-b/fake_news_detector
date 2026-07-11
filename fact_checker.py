@@ -214,8 +214,11 @@ class FactChecker:
                 if translated_text and not translated_text.startswith("Translation:"):
                     translations[target_lang] = translated_text
 
-            except Exception as e:
-                st.warning(f"Translation to {target_lang} failed: {str(e)}")
+            except Exception:
+                # NOTE: previously surfaced via st.warning(...), which leaked
+                # a translation-failure box into the UI. Silently skip this
+                # language instead — the calling code already tolerates a
+                # missing translation (falls back to the original claim).
                 continue
 
         return translations
@@ -385,64 +388,38 @@ class FactChecker:
 
     def search_evidence(self, claim: str, num_results: int = 5) -> List[Dict[str, str]]:
         """
-        Search for evidence using multi-language approach to avoid language bias.
+        Search for evidence. English-only project, so this always runs a
+        single search pass.
 
-        Args:
-            claim: The claim to search for evidence
-            num_results: Number of search results to return per language
-
-        Returns:
-            List of evidence documents with title, url, and snippet from multiple languages
+        FIX: this used to push a stream of st.empty()/st.info()/st.success()
+        boxes into the page ("Running multi-language search...", "Searching
+        language: en - ...", "found N pieces of evidence", plus two
+        time.sleep(2) pauses to let each one be read) — that's the extra
+        blue/grey status boxes that were appearing below the Check Now
+        button in the UI. All of that UI plumbing is removed here; progress
+        is now shown by the single morphing status line in app.py instead,
+        and search runs straight through with no artificial delays.
         """
-        # Multi-language search to avoid language bias
-        progress_placeholder = st.empty()
-        progress_placeholder.info("🌍 Running multi-language search to gather comprehensive evidence...")
-
-        # Define target languages for search (English only, per project requirements)
         search_languages = ['en']
-
-        # Translate claim to multiple languages
         translations = self._translate_claim(claim, search_languages)
-        progress_placeholder.success(f"✅ Translated into {len(translations)} languages for search")
-
-        # Auto-clear after 2 seconds
-        import time
-        time.sleep(2)
-        progress_placeholder.empty()
 
         all_evidence = []
 
-        # Create a container for search progress that will be cleared
-        search_progress = st.empty()
-
         for lang_code, translated_claim in translations.items():
             try:
-                # Show current search progress
-                with search_progress.container():
-                    st.info(f"🔍 Searching language: {lang_code} - {translated_claim[:50]}...")
-
-                # Search with translated claim
                 if self.search_engine == "searxng":
                     evidence_docs = self._search_with_searxng(translated_claim, num_results)
                 else:
                     evidence_docs = self._search_with_duckduckgo(translated_claim, num_results)
 
-                # Add language metadata to evidence
                 for doc in evidence_docs:
                     doc['search_language'] = lang_code
                     doc['search_query'] = translated_claim
-                    # Add language identifier to help with diversity optimization
                     doc['detected_language'] = lang_code
 
                 all_evidence.extend(evidence_docs)
 
-                # Update progress
-                with search_progress.container():
-                    st.success(f"✅ {lang_code}: found {len(evidence_docs)} pieces of evidence")
-
-            except Exception as e:
-                with search_progress.container():
-                    st.warning(f"⚠️ {lang_code} search failed: {str(e)}")
+            except Exception:
                 continue
 
         # Remove duplicates based on URL
@@ -452,17 +429,6 @@ class FactChecker:
             if doc['url'] not in seen_urls:
                 seen_urls.add(doc['url'])
                 unique_evidence.append(doc)
-
-        # Clear search progress and show final result
-        search_progress.empty()
-
-        # Brief final summary that will be cleared by the calling function
-        final_status = st.empty()
-        final_status.success(f"🎯 Multi-language search complete, {len(unique_evidence)} unique pieces of evidence found")
-
-        # Auto-clear final status after 2 seconds
-        time.sleep(2)
-        final_status.empty()
 
         return unique_evidence
 
@@ -503,8 +469,11 @@ class FactChecker:
 
             return evidence_docs
 
-        except Exception as e:
-            st.error(f"SearXNG search failed: {str(e)}")
+        except Exception:
+            # NOTE: previously surfaced via st.error(...), leaking a search
+            # failure box into the UI. The caller already handles an empty
+            # list gracefully (falls back to "no evidence found"), so we
+            # just fail silently here.
             return []
 
     def _search_with_duckduckgo(
@@ -538,8 +507,10 @@ class FactChecker:
 
             return evidence_docs
 
-        except Exception as e:
-            st.warning(f"DuckDuckGo search failed: {str(e)}")
+        except Exception:
+            # NOTE: previously surfaced via st.warning(...), leaking a
+            # search-failure box into the UI. Fail silently instead — the
+            # caller already handles an empty list gracefully.
             return []
 
     def get_evidence_chunks(

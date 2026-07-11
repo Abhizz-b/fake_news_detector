@@ -500,17 +500,43 @@ def _clear_claim_input():
     st.session_state.claim_input_box = ""
 
 
+def _render_hero(placeholder, status_text: str = None):
+    """Renders the hero heading + either the static tagline (idle state)
+    or an animated status line (while a fact-check is running) inside
+    the SAME placeholder. This is what makes the tagline morph into the
+    progress indicator in place, instead of separate status boxes
+    appearing below the button.
+    """
+    if status_text is None:
+        body_html = (
+            '<p class="fnd-hero-tagline">'
+            "Paste any news, headline, or claim — our AI cross-checks it "
+            "against live web sources and tells you what's real."
+            "</p>"
+        )
+    else:
+        body_html = (
+            '<div class="fnd-status-line">'
+            '<span class="fnd-spinner"></span>'
+            f'<span class="fnd-status-text">{status_text}</span>'
+            "</div>"
+        )
+
+    placeholder.markdown(
+        f"""
+        <div class="fnd-hero-minimal">
+            <h1><span class="muted-line">Think twice.</span><br/><span class="accent">Verify everything.</span></h1>
+            {body_html}
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
 def render_home_page():
     with st.container(key="home_center_wrap"):
-        st.markdown(
-            """
-            <div class="fnd-hero-minimal">
-                <h1><span class="muted-line">Think twice.</span><br/><span class="accent">Verify everything.</span></h1>
-                <p>Paste any news, headline, or claim — our AI cross-checks it against live web sources and tells you what's real.</p>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
+        hero_placeholder = st.empty()
+        _render_hero(hero_placeholder)
 
         with st.container(key="claim_shell"):
             claim_input = st.text_area(
@@ -561,7 +587,7 @@ def render_home_page():
 
             if check_clicked:
                 if final_claim:
-                    run_fact_check(final_claim)
+                    run_fact_check(final_claim, hero_placeholder)
                 else:
                     st.warning("Please paste a headline or claim first.")
 
@@ -574,7 +600,7 @@ def render_home_page():
         )
 
 
-def run_fact_check(user_input: str):
+def run_fact_check(user_input: str, hero_placeholder):
     config_params = get_config_parameters()
     if not config_params:
         st.error("Failed to get configuration, please reconfigure")
@@ -599,40 +625,46 @@ def run_fact_check(user_input: str):
     search_config = model_manager.get_search_provider_config(search_provider)
     searxng_url = search_config.get("base_url", "http://localhost:8090")
 
-    with st.spinner("Extracting the core claim..."):
-        fact_checker = FactChecker(
-            api_base=api_base,
-            api_key=api_key,
-            model=chat_model,
-            temperature=0.0,
-            max_tokens=1000,
-            embedding_base_url=embedding_api_base,
-            embedding_model=embedding_model,
-            embedding_api_key=embedding_api_key,
-            search_engine=search_provider,
-            searxng_url=searxng_url,
-            output_language=selected_language,
-            search_config=search_config,
-        )
-        claim = fact_checker.extract_claim(user_input)
-        if "claim:" in claim.lower():
-            claim = claim.split("claim:")[-1].strip()
+    # FIX: the three st.spinner(...) boxes below (each with its own
+    # standalone message) were replaced by a single morphing status line
+    # in the hero area — the tagline text fades into whichever of these
+    # three messages is currently active, then fades back to the tagline
+    # once the result is ready (page navigates to "results" via
+    # st.rerun() below, so the hero unmounts naturally after that).
+    _render_hero(hero_placeholder, "Extracting the core claim...")
+    fact_checker = FactChecker(
+        api_base=api_base,
+        api_key=api_key,
+        model=chat_model,
+        temperature=0.0,
+        max_tokens=1000,
+        embedding_base_url=embedding_api_base,
+        embedding_model=embedding_model,
+        embedding_api_key=embedding_api_key,
+        search_engine=search_provider,
+        searxng_url=searxng_url,
+        output_language=selected_language,
+        search_config=search_config,
+    )
+    claim = fact_checker.extract_claim(user_input)
+    if "claim:" in claim.lower():
+        claim = claim.split("claim:")[-1].strip()
 
-    with st.spinner("Searching for relevant evidence..."):
-        search_max_results = search_config.get("max_results", 5)
-        evidence_docs = fact_checker.search_evidence(claim, search_max_results)
+    _render_hero(hero_placeholder, "Searching for relevant evidence...")
+    search_max_results = search_config.get("max_results", 5)
+    evidence_docs = fact_checker.search_evidence(claim, search_max_results)
 
-        base_results = search_config.get("max_results", 5)
-        expansion_factor = (
-            model_manager.get_current_config().get("defaults", {}).get("evidence_display_multiplier", 2.0)
-        )
-        max_evidence_display = int(base_results * 1 * expansion_factor)
-        evidence_chunks = fact_checker.get_evidence_chunks(evidence_docs, claim, top_k=max_evidence_display)
+    base_results = search_config.get("max_results", 5)
+    expansion_factor = (
+        model_manager.get_current_config().get("defaults", {}).get("evidence_display_multiplier", 2.0)
+    )
+    max_evidence_display = int(base_results * 1 * expansion_factor)
+    evidence_chunks = fact_checker.get_evidence_chunks(evidence_docs, claim, top_k=max_evidence_display)
 
     evaluation_evidence = evidence_chunks[:-1] if len(evidence_chunks) > 1 else evidence_chunks
 
-    with st.spinner("Evaluating claim accuracy..."):
-        evaluation = fact_checker.evaluate_claim(claim, evaluation_evidence)
+    _render_hero(hero_placeholder, "Evaluating claim accuracy...")
+    evaluation = fact_checker.evaluate_claim(claim, evaluation_evidence)
 
     verdict = evaluation["verdict"]
     confidence = evaluation.get("confidence") or estimate_confidence(verdict, len(evaluation_evidence))
