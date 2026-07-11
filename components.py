@@ -298,14 +298,32 @@ def render_reasoning_card(reasoning: str):
 # Evidence sources card
 # ---------------------------------------------------------------------------
 def render_evidence_card(evidence_chunks: list):
+    import html
+
     rows_html = ""
     for chunk in evidence_chunks:
         source = chunk.get("source", "Unknown source")
+        # FIX: source was rendered as plain text (no <a> tag), so links
+        # weren't clickable. Real URLs now render as an actual anchor
+        # (opens in a new tab); anything that isn't a proper http(s) URL
+        # falls back to plain text instead of a broken/dead link.
+        is_link = isinstance(source, str) and source.startswith(("http://", "https://"))
+        safe_source = html.escape(source)
+        display_text = safe_source if len(safe_source) <= 70 else safe_source[:67] + "..."
+
+        if is_link:
+            name_html = (
+                f'<a class="fnd-source-name fnd-source-link" href="{safe_source}" '
+                f'target="_blank" rel="noopener noreferrer" title="{safe_source}">{display_text}</a>'
+            )
+        else:
+            name_html = f'<div class="fnd-source-name">{safe_source}</div>'
+
         rows_html += f"""
         <div class="fnd-source-row">
             <div class="fnd-source-icon">🔗</div>
             <div>
-                <div class="fnd-source-name">{source}</div>
+                {name_html}
                 <div class="fnd-source-tag">Web source</div>
             </div>
         </div>

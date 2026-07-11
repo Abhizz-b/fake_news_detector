@@ -876,6 +876,20 @@ section[data-testid="stSidebar"] .st-key-sidebar_expand_btn button {
 }
 .fnd-source-name { font-weight: 600; font-size: 0.88rem; color: #f0eefc; }
 .fnd-source-tag { color: #8a8aa3; font-size: 0.75rem; }
+/* NEW: clickable evidence source link — was plain unclickable text.
+   Styled to look identical to the old plain text (same color/weight)
+   so nothing shifts visually, but now underlines on hover and shows
+   a pointer cursor to signal it's actually clickable. */
+a.fnd-source-link {
+    display: inline-block;
+    text-decoration: none;
+    color: #f0eefc;
+    cursor: pointer;
+}
+a.fnd-source-link:hover {
+    color: #c4b5fd;
+    text-decoration: underline;
+}
 
 /* ---------- History table ---------- */
 .fnd-history-header {
