@@ -894,7 +894,7 @@ a.fnd-source-link:hover {
 /* ---------- History table ---------- */
 .fnd-history-header {
     display: grid;
-    grid-template-columns: 3fr 1fr 1.2fr 0.8fr 1.4fr 0.4fr;
+    grid-template-columns: 3fr 1fr 1.2fr 0.8fr 1.4fr;
     gap: 0.5rem;
     color: #8a8aa3;
     font-size: 0.78rem;
@@ -902,7 +902,7 @@ a.fnd-source-link:hover {
 }
 .fnd-history-row {
     display: grid;
-    grid-template-columns: 3fr 1fr 1.2fr 0.8fr 1.4fr 0.4fr;
+    grid-template-columns: 3fr 1fr 1.2fr 0.8fr 1.4fr;
     gap: 0.5rem;
     align-items: center;
     background: #14141f;
@@ -911,12 +911,7 @@ a.fnd-source-link:hover {
     padding: 0.7rem 1rem;
     margin-bottom: 0.5rem;
     font-size: 0.88rem;
-    transition: border-color 0.15s ease, transform 0.15s ease;
     animation: fndFadeUp 0.35s ease-out both;
-}
-.fnd-history-row:hover {
-    border-color: #8b5cf6;
-    transform: translateX(2px);
 }
 
 /* =========================================================================

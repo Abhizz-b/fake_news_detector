@@ -348,7 +348,7 @@ def render_history_header():
         """
         <div class="fnd-history-header">
             <div>Claim</div><div>Verdict</div><div>Confidence</div>
-            <div>Sources</div><div>Checked At</div><div></div>
+            <div>Sources</div><div>Checked At</div>
         </div>
         """,
         unsafe_allow_html=True,
@@ -366,7 +366,6 @@ def render_history_row(claim_text: str, verdict: str, confidence: int, sources: 
             <div>{confidence}%</div>
             <div>{sources}</div>
             <div style="color:#8a8aa3;">{checked_at}</div>
-            <div>→</div>
         </div>
         """,
         unsafe_allow_html=True,
