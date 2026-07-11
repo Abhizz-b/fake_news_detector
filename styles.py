@@ -569,16 +569,15 @@ section[data-testid="stSidebar"] .st-key-sidebar_expand_btn button {
     margin: 0 auto;
     padding: 0.4rem 2rem 1rem;
 }
-/* FIX: Streamlit adds its own default vertical gap (~1rem) between
-   every top-level element inside a container — on top of our own
-   margins/spacers — which was the last hidden source of the extra
-   page length forcing a vertical scroll. Scoped to home_center_wrap
-   only, so results/history pages keep their normal breathing room. */
+/* FIX: gap was forced down to 0.4rem AND every element's own margin
+   to 0 — combined, that was too aggressive and caused the Clear/Check
+   Now button row to overlap the pills row above it. Backing off to a
+   moderate gap (still much tighter than Streamlit's ~1rem default,
+   but with enough room that rows don't collide) and dropping the
+   margin-bottom:0 override entirely fixes the overlap while keeping
+   the page compact. */
 .st-key-home_center_wrap [data-testid="stVerticalBlock"] {
-    gap: 0.4rem !important;
-}
-.st-key-home_center_wrap [data-testid="element-container"] {
-    margin-bottom: 0 !important;
+    gap: 0.7rem !important;
 }
 .fnd-hero-minimal {
     text-align: center;
@@ -671,6 +670,26 @@ section[data-testid="stSidebar"] .st-key-sidebar_expand_btn button {
 .st-key-clear_home_btn button:hover {
     border-color: #34344a !important;
     color: #fff !important;
+}
+
+/* FIX: Clear and Check Now previously inherited the generic
+   .stButton hover rules (translateY(-1px) "lift" on hover), which
+   read as an unwanted moving/floating animation. Both buttons now get
+   `transform: none` on hover (cancelling that lift) and instead only
+   animate on :active — a quick scale-down "press" the instant the
+   button is clicked, with nothing happening on hover at all. */
+.st-key-clear_home_btn button,
+.st-key-check_now_btn button {
+    transition: transform 0.08s ease, box-shadow 0.15s ease, background 0.2s ease, border-color 0.15s ease, color 0.15s ease !important;
+}
+.st-key-clear_home_btn button:hover,
+.st-key-check_now_btn button:hover {
+    transform: none !important;
+    box-shadow: none !important;
+}
+.st-key-clear_home_btn button:active,
+.st-key-check_now_btn button:active {
+    transform: scale(0.96) !important;
 }
 
 /* ---------- Input card focus glow (results/other pages) ---------- */

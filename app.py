@@ -487,6 +487,19 @@ SAMPLE_URL = "https://example-news-site.com/breaking-story"
 SAMPLE_VIRAL_CLAIM = "Drinking bleach cures COVID-19"
 
 
+def _clear_claim_input():
+    """FIX: setting st.session_state.claim_input_box directly inside the
+    button's if-block (after st.text_area(key="claim_input_box") has
+    already run earlier in the same script) is exactly what Streamlit's
+    'cannot be modified after the widget ... is instantiated' error is
+    about — the widget already exists for this run by the time the
+    button's code executes. The supported way to do this is an on_click
+    callback: Streamlit runs callbacks *before* the script re-executes
+    and widgets are recreated, so mutating session_state here is safe.
+    """
+    st.session_state.claim_input_box = ""
+
+
 def render_home_page():
     with st.container(key="home_center_wrap"):
         st.markdown(
@@ -540,11 +553,9 @@ def render_home_page():
             # instead of stretching them full-width across the card.
             spacer, c1, c2 = st.columns([3, 1, 1.3])
             with c1:
-                if st.button("Clear", use_container_width=True, key="clear_home_btn"):
-                    st.session_state.claim_input_box = ""
-                    st.rerun()
+                st.button("Clear", use_container_width=True, key="clear_home_btn", on_click=_clear_claim_input)
             with c2:
-                check_clicked = st.button("Check Now →", type="primary", use_container_width=True)
+                check_clicked = st.button("Check Now →", type="primary", use_container_width=True, key="check_now_btn")
 
             final_claim = (claim_input or "").strip()
 
