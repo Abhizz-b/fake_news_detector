@@ -89,4 +89,6 @@ MIT License — see [LICENSE](LICENSE) for details.
 
 ---
 
-If this project helps you, a star would mean a lot.
+Built solo, end to end — from the fact-checking pipeline to the UI.
+
+⭐ If this project helps you, a star would mean a lot.
