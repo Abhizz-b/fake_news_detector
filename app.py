@@ -508,21 +508,25 @@ def render_home_page():
                 key="claim_input_box",
             )
 
-            # Quick-action pills — same row, equal width, matching the
-            # mockup's three flex:1 pills side by side.
-            p1, p2, p3 = st.columns(3, gap="small")
-            with p1:
-                if st.button("📰  Try a headline", use_container_width=True, key="quick_pill_headline"):
-                    st.session_state.claim_input_box = SAMPLE_HEADLINE
-                    st.rerun()
-            with p2:
-                if st.button("🔗  Paste a URL", use_container_width=True, key="quick_pill_url"):
-                    st.session_state.claim_input_box = SAMPLE_URL
-                    st.rerun()
-            with p3:
-                if st.button("🌐  Check a viral claim", use_container_width=True, key="quick_pill_viral"):
-                    st.session_state.claim_input_box = SAMPLE_VIRAL_CLAIM
-                    st.rerun()
+            # FIX: these were st.button()s that filled the textarea with a
+            # sample on click via st.session_state.claim_input_box = ... —
+            # but by the time they're clicked, the claim_input_box widget
+            # has already been instantiated above, so Streamlit throws
+            # StreamlitAPIException ("cannot be modified after the widget
+            # ... is instantiated"). Rather than working around that with
+            # extra rerun/key-juggling, these are now plain static pills:
+            # no st.button, no click handler, no hover glow — just a
+            # decorative row of labels, so there's nothing left to throw.
+            st.markdown(
+                """
+                <div class="fnd-static-pill-row">
+                    <div class="fnd-static-pill">📰&nbsp;&nbsp;Try a headline</div>
+                    <div class="fnd-static-pill">🔗&nbsp;&nbsp;Paste a URL</div>
+                    <div class="fnd-static-pill">🌐&nbsp;&nbsp;Check a viral claim</div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
 
             # FIX: was a 1.1rem spacer, adding unnecessary extra vertical
             # length to the page on top of the other spacing fixes in

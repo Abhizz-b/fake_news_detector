@@ -618,23 +618,27 @@ section[data-testid="stSidebar"] .st-key-sidebar_expand_btn button {
     max-width: 880px;
 }
 
-/* Quick-action pills below the claim textarea — three equal-width
-   buttons restyled from generic Streamlit buttons into rounded outline
-   pills, matching the approved mockup. */
-[class*="quick_pill"] button {
-    background: #0f0c1a !important;
-    border: 1px solid #2a2a3a !important;
-    color: #8d87a3 !important;
-    border-radius: 12px !important;
-    font-weight: 500 !important;
-    font-size: 0.85rem !important;
-    padding: 0.75rem 1rem !important;
-    transition: all 0.2s ease;
+/* Quick-action pills below the claim textarea — now plain static divs
+   (see app.py), not buttons. No hover state, no glow, no pointer
+   cursor: they're purely decorative labels, so nothing here reacts to
+   the mouse at all. */
+.fnd-static-pill-row {
+    display: flex;
+    gap: 0.6rem;
+    width: 100%;
 }
-[class*="quick_pill"] button:hover {
-    border-color: #8b5cf6 !important;
-    color: #f3f1f9 !important;
-    background: rgba(139, 92, 246, 0.12) !important;
+.fnd-static-pill {
+    flex: 1;
+    background: #0f0c1a;
+    border: 1px solid #2a2a3a;
+    color: #8d87a3;
+    border-radius: 12px;
+    font-weight: 500;
+    font-size: 0.85rem;
+    padding: 0.75rem 1rem;
+    text-align: center;
+    cursor: default;
+    user-select: none;
 }
 
 /* Minimal home page: the single claim/article box (headline or full
