@@ -173,7 +173,7 @@ class ModelManager:
             OpenAI client instance
         """
         if provider is None:
-            provider = self.config.get("defaults", {}).get("llm_provider", "local_api")
+            provider = self.config.get("defaults", {}).get("llm_provider", "groq")
 
         if provider in self.llm_clients:
             return self.llm_clients[provider]
@@ -189,59 +189,60 @@ class ModelManager:
             f"{provider.upper()}_API_KEY", provider_config.get("api_key", "EMPTY")
         )
 
-        if provider_config["type"] == "ollama":
-            # Ollama uses a different API structure
-            client = OllamaClient(base_url, api_key)
-        else:
-            # OpenAI compatible APIs
-            client = OpenAI(api_key=api_key, base_url=base_url)
+        # OpenAI compatible APIs (Groq, Gemini, OpenAI, and any custom provider all speak this protocol)
+        client = OpenAI(api_key=api_key, base_url=base_url)
 
         self.llm_clients[provider] = client
         return client
 
-    def get_embedding_model(self, provider: str = None):
+    def get_embedding_model(self, provider: str = None, model_name: str = None):
         """
         Get embedding model for specified provider.
 
         Args:
             provider: Provider name (uses default if not specified)
+            model_name: Specific model to use (uses default if not specified)
 
         Returns:
             Embedding model instance
         """
         if provider is None:
             provider = self.config.get("defaults", {}).get(
-                "embedding_provider", "bge_m3_local"
+                "embedding_provider", "gemini"
             )
 
-        if provider in self.embedding_models:
-            return self.embedding_models[provider]
+        cache_key = f"{provider}:{model_name or 'default'}"
+        if cache_key in self.embedding_models:
+            return self.embedding_models[cache_key]
 
-        provider_config = self.config.get("embedding_providers", {}).get(provider, {})
+        # Embedding providers now live under the unified "providers" section
+        # (e.g. Gemini's gemini-embedding-001), not a separate "embedding_providers" key.
+        provider_config = self.config.get("providers", {}).get(provider, {})
         if not provider_config:
             raise ValueError(
                 f"Embedding provider {provider} not found in configuration"
             )
 
-        try:
-            if provider_config["type"] == "api":
-                model = APIEmbeddingClient(
-                    provider_config["base_url"],
-                    provider_config.get("api_key", "EMPTY"),
-                    provider_config.get("model", "bge-m3"),
-                )
-            elif provider_config["type"] == "openai_compatible":
-                model = OpenAIEmbeddingClient(
-                    provider_config["base_url"],
-                    provider_config.get("api_key", "EMPTY"),
-                    provider_config.get("model", "text-embedding-3-small"),
-                )
-            else:
-                raise ValueError(
-                    f"Unsupported embedding provider type: {provider_config['type']}"
-                )
+        if model_name is None:
+            model_name = self.config.get("defaults", {}).get("embedding_model")
+            if not model_name:
+                available_models = provider_config.get("models", {})
+                model_name = next(iter(available_models), None)
 
-            self.embedding_models[provider] = model
+        if not model_name:
+            raise ValueError(f"No embedding model available for provider {provider}")
+
+        try:
+            base_url = os.getenv(
+                f"{provider.upper()}_BASE_URL", provider_config.get("base_url")
+            )
+            api_key = os.getenv(
+                f"{provider.upper()}_API_KEY", provider_config.get("api_key", "EMPTY")
+            )
+
+            model = OpenAIEmbeddingClient(base_url, api_key, model_name)
+
+            self.embedding_models[cache_key] = model
             return model
 
         except Exception as e:
@@ -291,9 +292,6 @@ class ModelManager:
                 # Simple format: ["model1", "model2", ...]
                 elif isinstance(data, list):
                     return data
-                # Ollama format: {"models": [{"name": "model_name"}, ...]}
-                elif "models" in data:
-                    return [model["name"] for model in data["models"]]
                 else:
                     return []
             else:
@@ -391,78 +389,6 @@ class ModelManager:
             st.error(f"Error saving configuration: {e}")
 
 
-class OllamaClient:
-    """Client for Ollama API."""
-
-    def __init__(self, base_url: str, api_key: str):
-        self.base_url = base_url.rstrip("/v1")
-        self.api_key = api_key
-
-    def chat_completions_create(
-        self,
-        model: str,
-        messages: List[Dict],
-        temperature: float = 0.0,
-        max_tokens: int = 2000,
-        **kwargs,
-    ):
-        """Create chat completion using Ollama API."""
-        url = f"{self.base_url}/api/chat"
-
-        # Convert OpenAI message format to Ollama format
-        system_message = ""
-        user_message = ""
-        for msg in messages:
-            if msg["role"] == "system":
-                system_message = msg["content"]
-            elif msg["role"] == "user":
-                user_message = msg["content"]
-
-        payload = {
-            "model": model,
-            "messages": [
-                {"role": "system", "content": system_message},
-                {"role": "user", "content": user_message},
-            ],
-            "stream": False,
-            "options": {"temperature": temperature, "num_predict": max_tokens},
-        }
-
-        try:
-            response = requests.post(
-                url, json=payload, headers={"Authorization": f"Bearer {self.api_key}"}
-            )
-            response.raise_for_status()
-
-            result = response.json()
-            # Convert Ollama response to OpenAI-like format
-            return type(
-                "Response",
-                (),
-                {
-                    "choices": [
-                        type(
-                            "Choice",
-                            (),
-                            {
-                                "message": type(
-                                    "Message",
-                                    (),
-                                    {
-                                        "content": result.get("message", {}).get(
-                                            "content", ""
-                                        )
-                                    },
-                                )()
-                            },
-                        )()
-                    ]
-                },
-            )()
-        except Exception as e:
-            raise Exception(f"Ollama API error: {e}")
-
-
 class APIEmbeddingClient:
     """Client for API-based embedding models."""
 
@@ -497,7 +423,7 @@ class APIEmbeddingClient:
 
 
 class OpenAIEmbeddingClient:
-    """Client for OpenAI-compatible embedding APIs."""
+    """Client for OpenAI-compatible embedding APIs (used for Gemini's embedding endpoint)."""
 
     def __init__(self, base_url: str, api_key: str, model: str):
         self.client = OpenAI(api_key=api_key, base_url=base_url)
