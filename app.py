@@ -724,6 +724,10 @@ def render_results_page():
 # ===========================================================================
 
 def render_history_page():
+    if st.button("← Back to Home", key="back_to_home_btn"):
+        st.session_state.page = "home"
+        st.rerun()
+
     st.markdown("## 🕒 History")
     st.caption("Your past fact-checks")
 
