@@ -1,228 +1,136 @@
-# 虚假新闻检测器使用指南
+# AI Fake News Detector — User Guide
 
-本文档提供了虚假新闻检测器的详细使用说明。
+This document explains how to use the AI Fake News Detector, including account management, fact-checking, and history features.
 
-# 虚假新闻检测器使用指南
+## Table of Contents
 
-本文档提供了虚假新闻检测器的详细使用说明，包括系统配置、账户管理、事实核查以及历史记录功能。
+1. [Overview](#overview)
+2. [Getting Started](#getting-started)
+3. [Account Management](#account-management)
+4. [Fact-Checking](#fact-checking)
+5. [History Management](#history-management)
+6. [Troubleshooting](#troubleshooting)
 
-## 目录
+## Overview
 
-1. [系统安装](#系统安装)
-2. [账户管理](#账户管理)
-3. [事实核查](#事实核查)
-4. [历史记录管理](#历史记录管理)
-5. [系统配置](#系统配置)
-6. [故障排除](#故障排除)
+The AI Fake News Detector is a web-based fact-checking tool. Paste in a news headline, claim, or article, and it will:
 
-## 系统安装
+1. **Extract the core claim** from your text (via Groq LLM)
+2. **Search the web** for relevant evidence (via DuckDuckGo)
+3. **Rank evidence** by semantic similarity to the claim (via Google Gemini embeddings)
+4. **Return a verdict** — True / False / Partially True / Unverifiable — with reasoning based on the evidence
 
-### 前提条件
+The app runs entirely on cloud-based AI services (Groq + Gemini), so there's nothing to install or configure locally — just open the link and use it.
 
-- Python 3.12
-- 本地部署的Qwen2.5模型或其他兼容OpenAI API的大语言模型
-- BGE-M3嵌入模型（本地部署或远程API）
-- 系统上安装的中文字体（用于PDF导出功能）
+## Getting Started
 
-### 安装步骤
+Simply open the deployed app link in your browser:
 
-1. 克隆代码仓库
-   ```bash
-   git clone https://github.com/CaptainYifei/fake-news-detector.git
-   cd fake-news-detector
-   ```
+**[Add your Streamlit Community Cloud link here]**
 
-2. 安装依赖项
-   ```bash
-   pip install -r requirements.txt
-   ```
+No installation, API keys, or local setup required — everything runs on the hosted version.
 
-3. 确保系统上有可用的中文字体（对PDF导出功能必要）
-   ```bash
-   # 在Ubuntu/Debian系统上
-   sudo apt-get install fonts-wqy-microhei fonts-arphic-uming
-   ```
+> **Note for developers:** If you want to run this project locally instead of using the hosted link, see the `README.md` for setup instructions (Python environment, dependencies, and your own Groq/Gemini API keys).
 
-4. 启动应用
-   ```bash
-   streamlit run app.py
-   ```
+## Account Management
 
-应用将在本地启动，通常访问地址为: http://localhost:8501
+### Register a New Account
 
-![应用启动截图]
+1. Open the app — the login page is shown by default
+2. Click the "Register" button
+3. Fill in the registration form:
+   - Username (at least 3 characters)
+   - Password (at least 6 characters)
+   - Confirm password
+4. Click the "Register" button
+5. After successful registration, the system automatically returns to the login page
 
-## 账户管理
+### Log In
 
-### 注册新账户
+1. Enter your username and password on the login page
+2. Click the "Login" button
+3. After successful login, the system redirects to the home page
 
-1. 打开应用，默认会显示登录页面
-2. 点击"注册新账号"按钮
-3. 填写注册表单:
-   - 用户名（至少3个字符）
-   - 密码（至少6个字符）
-   - 确认密码
-4. 点击"注册"按钮
-5. 注册成功后，系统会自动返回登录页面
+### Log Out
 
-![注册页面截图]
+On any page, click the "Logout" button in the top navigation bar (account dropdown) to sign out.
 
-### 登录系统
+## Fact-Checking
 
-1. 在登录页面输入用户名和密码
-2. 点击"登录"按钮
-3. 登录成功后，系统会跳转到首页
+### Run a New Fact-Check
 
-![登录页面截图]
+1. After logging in, the home page shows the fact-checking interface by default
+2. Enter the news text you want to check into the input box
+3. Submit it
+4. The system will automatically:
+   - Extract the core claim from the news text
+   - Search the web for relevant evidence
+   - Verify the claim's accuracy based on that evidence
 
-### 退出登录
+### View the Result
 
-在任何页面，点击顶部导航栏的"登出"按钮即可退出当前账户。
+Once the check is complete, the system displays:
 
-## 事实核查
+1. **Core Claim**: The verifiable statement extracted from the news
+2. **Evidence Sources**: Relevant evidence gathered from web search, with sources
+3. **Verdict**: One of the following:
+   - ✅ True
+   - ❌ False
+   - ⚠️ Partially True
+   - ❓ Unverifiable
+4. **Reasoning**: A detailed analysis of the claim's accuracy based on the evidence
 
-### 进行新的事实核查
+## History Management
 
-1. 登录后，系统默认显示首页的事实核查界面
-2. 在底部的聊天输入框中输入需要核查的新闻文本
-3. 点击发送按钮或按回车键提交
-4. 系统将自动执行以下步骤:
-   - 提取新闻的核心声明
-   - 搜索相关证据
-   - 根据证据核查声明的真实性
+### View History
 
+1. Click "History" in the top navigation bar (account dropdown)
+2. All past fact-checks are shown in reverse chronological order
+3. Each entry shows:
+   - Core claim (summary)
+   - Verdict (True/False/Partially True/Unverifiable)
+   - Check timestamp
+   - A "View Details" button
 
+### View History Details
 
-### 查看核查结果
+1. In the history list, click "View Details" on any entry
+2. The system shows the full report for that check, including:
+   - The original news text
+   - The extracted core claim
+   - All evidence sources
+   - The verdict and reasoning
 
-核查完成后，系统会显示以下信息:
+### Export as PDF
 
-1. **核心声明**: 从新闻中提取的可核查陈述
-2. **证据来源**: 从网络搜索获取的相关证据及其来源
-3. **结论**: 包括以下类型之一:
-   - ✅ 正确
-   - ❌ 错误
-   - ⚠️ 部分正确
-   - ❓ 无法验证
-4. **推理过程**: 基于证据对声明真实性的详细分析
+1. On the history detail page, find the "Export Report" section
+2. Click "Export as PDF"
+3. The system generates and downloads a PDF containing the full report
 
+## Troubleshooting
 
+### Search Engine Rate Limits
 
-## 历史记录管理
+If you encounter a search/evidence error:
 
-### 查看历史记录
+1. This usually means the DuckDuckGo search backend is temporarily rate-limiting requests
+2. Wait a moment and try again
+3. If it persists, try rephrasing the claim slightly
 
-1. 点击顶部导航栏的"历史记录"按钮
-2. 系统会显示您过去进行的所有事实核查记录（按时间倒序排列）
-3. 每条记录显示:
-   - 核心声明（摘要）
-   - 结论状态（正确/错误/部分正确/无法验证）
-   - 核查时间
-   - "查看详情"按钮
+### Login / Account Issues
 
+If you can't log in or register:
 
+1. Make sure your username is at least 3 characters and password at least 6 characters
+2. Try refreshing the page and registering again if the issue persists
 
-### 浏览历史记录分页
+### Other Issues
 
-如果历史记录较多:
-1. 使用页面底部的分页控制
-2. 点击"上一页"或"下一页"按钮浏览更多记录
+For any other issues:
 
-### 查看历史记录详情
-
-1. 在历史记录列表中，点击任意记录的"查看详情"按钮
-2. 系统会显示该记录的完整核查报告，包括:
-   - 原始新闻文本
-   - 提取的核心声明
-   - 所有证据来源
-   - 结论和推理过程
-
-
-
-### 导出为PDF
-
-1. 在历史记录详情页面底部，找到"导出报告"部分
-2. 点击"导出为PDF"按钮
-3. 系统将生成并下载包含完整核查报告的PDF文件
-
-
-
-## 系统配置
-
-### 侧边栏配置
-
-在首页的侧边栏中，您可以配置以下选项:
-
-1. **API基础URL**: 设置本地或远程API端点
-   - 默认值: `http://localhost:8000/v1`
-
-2. **模型选择**: 选择用于事实核查的模型
-   - 默认: Qwen2.5-14B-Instruct-AWQ
-
-3. **高级设置** (点击展开):
-   - **温度**: 调整模型响应的确定性（0.0-1.0）
-     - 低值: 更确定、一致的回答
-     - 高值: 更多样化、创造性的回答
-   - **最大响应长度**: 设置模型回复的最大标记数（100-4000）
-
-
-
-## 故障排除
-
-### 搜索引擎限制
-
-如果遇到"Error searching for evidence: Ratelimit"错误:
-
-1. 这表示DuckDuckGo搜索API暂时限制了请求
-2. 系统会自动尝试多次重试，使用不同的代理设置
-3. 如果所有重试均失败，系统将使用本地备用信息继续执行
-4. 您可以稍后再试，或确认网络代理设置
-
-### 中文PDF导出问题
-
-如果PDF中无法正确显示中文:
-
-1. 确保系统安装了所需的中文字体
-2. 检查`pdf_export.py`中的字体路径是否正确
-3. 如有需要，修改字体路径为系统中实际可用的中文字体路径
-
-### 数据库错误
-
-如果遇到数据库相关错误:
-
-1. 确保应用有权限读写当前目录
-2. 检查`factcheck.db`文件是否存在且未被损坏
-3. 如有必要，备份数据并删除损坏的数据库文件，系统将自动创建新文件
-
-### 其他问题
-
-如果遇到其他问题:
-
-1. 检查控制台日志以获取详细错误信息
-2. 确保所有依赖项已正确安装
-3. 确认LLM和嵌入模型正确配置并可访问
-4. 如果问题持续存在，请在GitHub仓库提交Issue
-
-## 高级用法
-
-### 使用自定义模型
-
-如需使用其他本地部署的模型:
-
-1. 确保模型提供与OpenAI API兼容的接口
-2. 在侧边栏中修改API基础URL和模型名称
-3. 根据需要调整温度和最大响应长度参数
-
-### 修改嵌入模型
-
-如需使用其他嵌入模型:
-
-1. 修改`fact_checker.py`中的模型路径:
-   ```python
-   self.embedding_model = BGEM3FlagModel('/path/to/your/model/')
-   ```
-2. 确保新模型与BGE-M3兼容或调整相应的代码
+1. Refresh the page and try again
+2. If the problem persists, please open an Issue on the GitHub repository
 
 ---
 
-© 2025 CaptainYifei - 有任何问题，请通过GitHub联系
+*This is a student project built for academic demonstration purposes.*
