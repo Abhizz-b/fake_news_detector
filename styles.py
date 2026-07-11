@@ -42,8 +42,11 @@ footer {visibility: hidden;}
     display: none !important;
 }
 
+/* FIX: was 2rem, pushing the whole app (header + hero) down and
+   forcing an extra scroll to see everything. Trimmed to bring the
+   header close to the top of the viewport. */
 .block-container {
-    padding-top: 2rem;
+    padding-top: 0.6rem;
     padding-bottom: 2rem;
     animation: fndFadeIn 0.4s ease-out;
 }
@@ -294,11 +297,14 @@ section[data-testid="stSidebar"] .st-key-sidebar_expand_btn button {
    same stack the .stApp gradient/base-color sits on), and the only
    separation from the hero content below is a single, very
    low-opacity 1px line — matching the approved mockup exactly.
+   FIX (round 2): padding/margin trimmed down — the navbar was
+   sitting too far from the top of the page and leaving too big a
+   gap above the "Think twice." headline below it.
    ========================================================================= */
 .st-key-app_header_bar {
     background: transparent;
-    padding: 0.9rem 0.5rem;
-    margin-bottom: 1rem;
+    padding: 0.55rem 0.5rem;
+    margin-bottom: 0.2rem;
     position: relative;
 }
 /* =========================================================================
@@ -514,6 +520,10 @@ section[data-testid="stSidebar"] .st-key-sidebar_expand_btn button {
    its children both horizontally and vertically, giving the generous,
    uncluttered spacing from the approved mockup instead of everything
    being pinned to the top of the page.
+   FIX: top padding was 4rem, which — stacked on top of the header's
+   own padding/margin above it — created a huge, page-lengthening gap
+   between the navbar and "Think twice." Reduced so the hero sits right
+   under the header without needing to scroll to see the whole page.
    ========================================================================= */
 .st-key-home_center_wrap {
     display: flex !important;
@@ -521,7 +531,7 @@ section[data-testid="stSidebar"] .st-key-sidebar_expand_btn button {
     align-items: center;
     max-width: 1180px;
     margin: 0 auto;
-    padding: 4rem 2rem 2rem;
+    padding: 1.4rem 2rem 2rem;
 }
 .fnd-hero-minimal {
     text-align: center;
