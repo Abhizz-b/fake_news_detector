@@ -6,7 +6,7 @@ An intelligent news verification system that uses semantic embeddings and large 
 [![Streamlit](https://img.shields.io/badge/streamlit-1.43+-red.svg)](https://streamlit.io)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
-**🔗 Live demo:** [fake-news-detector-abhiz.streamlit.app](https://fake-news-detector-abhiz.streamlit.app/) — no setup, no API key, just sign up and start checking.
+**🔗 Live demo:** [fake-news-detector-abhiz.streamlit.app](https://fake-news-detector-abhiz.streamlit.app/) no setup, no API key, just sign up and start checking.
 
 > **Student Project Notice** — This is a student project demo built on free-tier AI models. Please verify important claims through official fact-checking sources as well.
 
