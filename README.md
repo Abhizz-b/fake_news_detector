@@ -14,7 +14,7 @@ An intelligent news verification system that uses semantic embeddings and large 
 
 ## What It Does
 
-Paste in a news headline, claim, article, or even a news article **URL**, and the app runs it through a full fact-checking pipeline in real time:
+Paste in a news headline, claim, article, or even a news article **URL**, and the app runs it through a full fact checking pipeline in real time:
 
 1. **Claim Extraction** — pulls out the core, verifiable factual claim from the input (fetches and reads the actual page content if a URL is given)
 2. **Evidence Search** — searches the live web for relevant, recent sources
