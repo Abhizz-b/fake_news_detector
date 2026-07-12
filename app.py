@@ -993,12 +993,18 @@ if "current_history_id" not in st.session_state:
 if "last_result" not in st.session_state:
     st.session_state.last_result = None
 
-if "user_id" not in st.session_state or st.session_state.user_id is None:
-    saved_login = auth.check_saved_login()
-    if saved_login:
-        st.session_state.user_id = saved_login["user_id"]
-        st.session_state.username = saved_login["username"]
-        st.session_state.persisted_login = saved_login
+# SECURITY FIX: this used to call auth.check_saved_login(), which read a
+# login token from a file on disk (data/.login_cache.json). On Streamlit
+# Community Cloud every visitor shares the same server filesystem, so
+# that file was effectively global — whoever logged in last with
+# "Remember me" got their session handed to every new visitor. That
+# function has been removed from auth.py entirely; login state now lives
+# only in st.session_state (which Streamlit keeps separate per browser
+# session on its own), initialized here as plain None defaults.
+if "user_id" not in st.session_state:
+    st.session_state.user_id = None
+if "username" not in st.session_state:
+    st.session_state.username = None
 
 is_authenticated = auth.show_auth_ui()
 
