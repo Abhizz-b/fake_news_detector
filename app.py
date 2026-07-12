@@ -801,17 +801,20 @@ def render_results_page():
         pdf_data = generate_fact_check_pdf(history_item_for_pdf)
         current_time = datetime.now().strftime("%Y%m%d_%H%M%S")
         filename = f"fact_check_report_{current_time}.pdf"
-        pdf_b64 = base64.b64encode(pdf_data).decode()
-        href = f"""
-        <a href="data:application/pdf;base64,{pdf_b64}"
-        download="{filename}" target="_blank"
-        style="display:inline-block;padding:0.5em 1em;
-        background:linear-gradient(90deg,#8b5cf6,#7c3aed);color:white;
-        text-decoration:none;border-radius:8px;font-weight:600;">
-        📄 Export as PDF
-        </a>
-        """
-        st.markdown(href, unsafe_allow_html=True)
+        # FIX: a raw HTML <a href="data:application/pdf;base64,..."> tag
+        # doesn't reliably trigger a download on Streamlit Community
+        # Cloud — deployed apps run inside a sandboxed iframe that blocks
+        # data-URI download clicks, so the click silently no-ops (browser
+        # shows a local file:/// path that was never actually written).
+        # st.download_button is Streamlit's native download mechanism,
+        # built specifically to work inside that sandboxed iframe.
+        st.download_button(
+            label="📄 Export as PDF",
+            data=pdf_data,
+            file_name=filename,
+            mime="application/pdf",
+            key="download_pdf_results",
+        )
     except Exception as e:
         st.error(f"PDF generation error: {str(e)}")
         st.info("Please make sure the ReportLab library is installed: pip install reportlab")
@@ -927,17 +930,15 @@ def render_history_detail_page():
         pdf_data = generate_fact_check_pdf(history_item)
         current_time = datetime.now().strftime("%Y%m%d_%H%M%S")
         filename = f"fact_check_report_{current_time}.pdf"
-        pdf_b64 = base64.b64encode(pdf_data).decode()
-        href = f"""
-        <a href="data:application/pdf;base64,{pdf_b64}"
-        download="{filename}" target="_blank"
-        style="display:inline-block;padding:0.5em 1em;
-        background:linear-gradient(90deg,#8b5cf6,#7c3aed);color:white;
-        text-decoration:none;border-radius:8px;font-weight:600;">
-        📄 Export as PDF
-        </a>
-        """
-        st.markdown(href, unsafe_allow_html=True)
+        # FIX: same iframe/data-URI issue as the results page — use
+        # Streamlit's native download_button instead of a raw HTML anchor.
+        st.download_button(
+            label="📄 Export as PDF",
+            data=pdf_data,
+            file_name=filename,
+            mime="application/pdf",
+            key="download_pdf_history",
+        )
     except Exception as e:
         st.error(f"PDF generation error: {str(e)}")
         st.info("Please make sure the ReportLab library is installed: pip install reportlab")
