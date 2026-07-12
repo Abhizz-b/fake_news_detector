@@ -21,7 +21,7 @@ Paste in a news headline, claim, article, or even a news article **URL**, and th
 3. **Semantic Ranking** — matches evidence to the claim using embedding-based similarity, not just keyword overlap
 4. **Verdict** — returns TRUE, FALSE, PARTIALLY TRUE, or UNVERIFIABLE, backed by clear reasoning and cited sources
 
-Input can be in English, Japanese, Korean, or Chinese — the output is always normalized to English, regardless of input language.
+Input can be in English, Japanese, Korean, or Chinese the output is always normalized to English, regardless of input language.
 
 ---
 
