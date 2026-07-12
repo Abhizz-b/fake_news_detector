@@ -319,10 +319,18 @@ def render_evidence_card(evidence_chunks: list):
         else:
             name_html = f'<div class="fnd-source-name">{safe_source}</div>'
 
+        # FIX (mobile overflow): wrapped name+tag in a dedicated
+        # .fnd-source-body div (previously a bare, class-less <div>).
+        # Without a class here there was nothing for styles.py to
+        # target, so this block could never shrink below the natural
+        # width of the longest URL inside it — that's what let the
+        # 5th/6th evidence links overflow past the card's right edge
+        # on a phone. See .fnd-source-body + a.fnd-source-link in
+        # styles.py for the actual shrink/wrap rules.
         rows_html += f"""
         <div class="fnd-source-row">
             <div class="fnd-source-icon">🔗</div>
-            <div>
+            <div class="fnd-source-body">
                 {name_html}
                 <div class="fnd-source-tag">Web source</div>
             </div>
@@ -344,6 +352,11 @@ def render_evidence_card(evidence_chunks: list):
 # History table
 # ---------------------------------------------------------------------------
 def render_history_header():
+    # NOTE: this header row is hidden outright on phones (<640px) via
+    # styles.py — a 5-column grid header has nothing left to line up
+    # with once history rows switch to a stacked layout there, so each
+    # row shows its own inline label (via the data-label attributes in
+    # render_history_row below) instead of relying on this header.
     st.markdown(
         """
         <div class="fnd-history-header">
@@ -358,14 +371,24 @@ def render_history_header():
 def render_history_row(claim_text: str, verdict: str, confidence: int, sources: int, checked_at: str):
     meta = verdict_meta(verdict)
     claim_short = (claim_text[:60] + "...") if len(claim_text) > 60 else claim_text
+    # FIX (mobile overflow): the old 5-column CSS grid (Claim / Verdict /
+    # Confidence / Sources / Checked At) has no room to breathe below
+    # ~640px — columns squeeze together and "Checked At" in particular
+    # wraps its date and time across multiple broken lines. Below that
+    # breakpoint, styles.py switches .fnd-history-row from `display:
+    # grid` to a stacked `display: flex; flex-direction: column`, and
+    # uses each div's `data-label` attribute (via a CSS ::before) to
+    # print a small "CLAIM" / "VERDICT" / etc. label above its value —
+    # these attributes are inert (ignored) at desktop width, where the
+    # grid + header row above still do the labelling instead.
     st.markdown(
         f"""
         <div class="fnd-history-row">
-            <div>{claim_short}</div>
-            <div><span class="fnd-badge {meta['badge']}">{meta['label']}</span></div>
-            <div>{confidence}%</div>
-            <div>{sources}</div>
-            <div style="color:#8a8aa3;">{checked_at}</div>
+            <div data-label="Claim">{claim_short}</div>
+            <div data-label="Verdict"><span class="fnd-badge {meta['badge']}">{meta['label']}</span></div>
+            <div data-label="Confidence">{confidence}%</div>
+            <div data-label="Sources">{sources}</div>
+            <div data-label="Checked At" style="color:#8a8aa3;">{checked_at}</div>
         </div>
         """,
         unsafe_allow_html=True,
