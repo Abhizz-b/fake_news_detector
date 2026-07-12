@@ -13,9 +13,9 @@ This document explains how to use the AI Fake News Detector, including account m
 
 ## Overview
 
-The AI Fake News Detector is a web-based fact-checking tool. Paste in a news headline, claim, or article, and it will:
+The AI Fake News Detector is a web-based fact-checking tool. Paste in a news headline, claim, article, or a news article URL, and it will:
 
-1. **Extract the core claim** from your text (via Groq LLM)
+1. **Extract the core claim** from your text (via Groq LLM) — if you paste a URL, it fetches the page content first
 2. **Search the web** for relevant evidence (via DuckDuckGo)
 3. **Rank evidence** by semantic similarity to the claim (via Google Gemini embeddings)
 4. **Return a verdict** — True / False / Partially True / Unverifiable — with reasoning based on the evidence
@@ -26,7 +26,7 @@ The app runs entirely on cloud-based AI services (Groq + Gemini), so there's not
 
 Simply open the deployed app link in your browser:
 
-**[Add your Streamlit Community Cloud link here]**
+**[fake-news-detector-abhiz.streamlit.app](https://fake-news-detector-abhiz.streamlit.app/)**
 
 No installation, API keys, or local setup required — everything runs on the hosted version.
 
@@ -60,12 +60,14 @@ On any page, click the "Logout" button in the top navigation bar (account dropdo
 ### Run a New Fact-Check
 
 1. After logging in, the home page shows the fact-checking interface by default
-2. Enter the news text you want to check into the input box
+2. Enter the news text — a headline, claim, article, or a direct news article URL — into the input box
 3. Submit it
 4. The system will automatically:
-   - Extract the core claim from the news text
+   - Extract the core claim (fetching the page first if you pasted a URL)
    - Search the web for relevant evidence
    - Verify the claim's accuracy based on that evidence
+
+> **Note:** Links from social platforms (LinkedIn, Instagram, X, Facebook, TikTok, Threads) aren't supported — these sites block scraping and personal posts don't have public evidence to check against. Use news article URLs instead.
 
 ### View the Result
 
