@@ -720,7 +720,9 @@ def run_fact_check(user_input: str, hero_placeholder):
     # message rather than a real claim. Stop here and show it as a
     # warning instead of continuing to search/evaluate that message
     # text as if it were the actual claim.
-    if claim.startswith("Could not extract article content from this URL"):
+    if claim.startswith("Could not extract article content from this URL") or claim.startswith(
+        "This looks like a social media post"
+    ):
         _render_hero(hero_placeholder)
         st.warning(claim)
         return

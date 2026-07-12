@@ -148,6 +148,33 @@ class FactChecker:
         end with a link)."""
         return bool(re.match(r"^\s*https?://\S+\s*$", text or ""))
 
+    # Platforms that (a) block automated scraping via robots.txt, so we
+    # can't reliably fetch the actual post content, and (b) mostly host
+    # personal posts/experiences that no public news source will have
+    # independently reported on - so even a perfect fetch wouldn't be
+    # verifiable via web search evidence. Rather than silently producing
+    # a misleading verdict (e.g. FALSE just because no public source
+    # happens to mention someone's personal LinkedIn post), we detect
+    # these upfront and explain the limitation clearly instead.
+    _SOCIAL_MEDIA_DOMAINS = (
+        "linkedin.com",
+        "instagram.com",
+        "twitter.com",
+        "x.com",
+        "facebook.com",
+        "tiktok.com",
+        "threads.net",
+    )
+
+    def _is_social_media_url(self, url: str) -> bool:
+        try:
+            from urllib.parse import urlparse
+
+            netloc = urlparse(url.strip()).netloc.lower()
+            return any(domain in netloc for domain in self._SOCIAL_MEDIA_DOMAINS)
+        except Exception:
+            return False
+
     def _fetch_url_content(self, url: str, max_chars: int = 4000) -> str:
         """Fetch a URL and extract its page title + readable text, so the
         claim-extraction step has actual article content instead of a
@@ -423,6 +450,18 @@ class FactChecker:
         # handing the LLM a raw link string it can't do anything useful
         # with. See the URL HANDLING section above for the full story.
         if self._is_url(text):
+            if self._is_social_media_url(text):
+                return (
+                    "This looks like a social media post (LinkedIn, "
+                    "Instagram, X/Twitter, Facebook, etc.). These platforms "
+                    "block automated access, so the post content can't be "
+                    "reliably fetched - and personal posts/experiences "
+                    "generally don't have public news coverage to verify "
+                    "them against anyway. This tool works best for public "
+                    "news claims and reported events. Please paste the "
+                    "specific claim or headline text directly instead."
+                )
+
             page_text = self._fetch_url_content(text)
             if page_text:
                 text = page_text
