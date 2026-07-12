@@ -94,7 +94,7 @@ Full walkthrough: [docs/usage.md](docs/usage.md)
 ## Troubleshooting
 
 **Model not responding / empty results** — the app may have hit free-tier API limits; try again in a bit.
-**Search not working** check your internet connection; DuckDuckGo occasionally rate-limits repeated requests.
+**Search not working** check your internet connection; DuckDuckGo occasionally rate limits repeated requests.
 
 For anything else, open an [issue](https://github.com/Abhizz-b/fake_news_detector/issues).
 
