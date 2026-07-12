@@ -660,6 +660,18 @@ section[data-testid="stSidebar"] .st-key-sidebar_expand_btn button {
 .fnd-pill-full { display: inline; }
 .fnd-pill-short { display: none; }
 
+/* =========================================================================
+   NEW: generic full-text / short-text toggle.
+   Used anywhere a label or value has a long desktop wording and a
+   compact mobile equivalent (e.g. "High Confidence" -> "High",
+   "Checked At" -> "Checked", a full timestamp -> a short one). Default
+   (desktop/tablet) shows the full version; the mobile media query
+   below flips this, exactly like the .fnd-pill-full/short pattern
+   above already does for the home-page quick-action pills.
+   ========================================================================= */
+.fnd-text-full { display: inline; }
+.fnd-text-short { display: none; }
+
 /* Minimal home page: the single claim/article box (headline or full
    article — same field), with a soft purple glow border */
 .st-key-claim_input_box textarea {
@@ -1065,12 +1077,13 @@ a.fnd-source-link:hover {
    MOBILE RESPONSIVENESS
    Everything above this point was designed/tested on a laptop-width
    viewport. These overrides kick in only under 640px (phones) and fix
-   five things that broke there: the top navbar wrapping the avatar
-   below the wordmark, the home-page quick-action pills wrapping text
-   unevenly, long evidence-source URLs overflowing their card, the
-   history table's 5-column grid getting crushed into an unreadable
-   single line, and the results-page verdict card + confidence ring
-   stacking on top of each other instead of sitting side-by-side.
+   the top navbar wrapping the avatar below the wordmark, the home-page
+   quick-action pills wrapping text unevenly, long evidence-source URLs
+   overflowing their card, the history table's 5-column grid getting
+   crushed into an unreadable single line, and the results-page verdict
+   card + confidence ring stacking on top of each other / ending up
+   unequal sizes instead of sitting side-by-side as two clean, equal,
+   compact boxes.
    Nothing above is touched for desktop/tablet — these rules only
    apply below the 640px breakpoint.
    ========================================================================= */
@@ -1116,25 +1129,12 @@ a.fnd-source-link:hover {
     }
 
     /* --- Fix 2: home page quick-action pills ---
-       FIX (v2): these used to stack full-width, one per line, on
-       phones. Now they stay in a single row (matching desktop) but
-       shrunk down — smaller font, tighter padding, smaller icon gap —
-       so all three ("Try a headline" / "Paste a URL" / "Check a viral
-       claim") comfortably fit side-by-side without overlapping. Text
-       is still allowed to wrap to two lines inside a pill if a label
-       is long, rather than overflowing the pill's edge. */
-    .fnd-static-pill-row {
-        flex-direction: row;
-        gap: 0.35rem;
-    }
-    /* --- Fix 2: home page quick-action pills ---
        FIX (v3): full labels physically can't fit on one line at
-       phone widths no matter the wrap point, which is what kept
-       producing lopsided two-line splits ("Try a" / "headline").
-       Below 640px we now show the short label instead (see the
-       .fnd-pill-full / .fnd-pill-short spans added in app.py) and
-       keep everything on a single line — no wrapping needed at all,
-       so every pill renders at the same clean single-line height. */
+       phone widths no matter the wrap point. Below 640px we show the
+       short label instead (see the .fnd-pill-full / .fnd-pill-short
+       spans added in app.py) and keep everything on a single line —
+       no wrapping needed at all, so every pill renders at the same
+       clean single-line height. */
     .fnd-pill-full { display: none; }
     .fnd-pill-short { display: inline; }
     .fnd-static-pill-row {
@@ -1152,6 +1152,14 @@ a.fnd-source-link:hover {
         align-items: center;
         justify-content: center;
     }
+
+    /* --- Fix 2b: generic full-text / short-text toggle ---
+       Flips every .fnd-text-full / .fnd-text-short pair used across
+       the app (verdict-card confidence label, "Checked At" / "Sources
+       Found" labels + the timestamp value on the results page) so
+       phones get the compact wording and desktop keeps the full one. */
+    .fnd-text-full { display: none !important; }
+    .fnd-text-short { display: inline !important; }
 
     /* --- Fix 3: long evidence-source URLs overflowing the card ---
        handled mainly via .fnd-source-body / a.fnd-source-link above
@@ -1199,15 +1207,16 @@ a.fnd-source-link:hover {
     }
 
     /* --- Fix 5: results-page verdict card + confidence ring
-       stacking instead of sitting side-by-side ---
+       stacking / ending up unequal sizes instead of sitting neatly
+       side-by-side ---
        Same root cause as Fix 1: st.columns() auto-stacks below 640px
-       by Streamlit's own default responsive behavior. app.py now
-       wraps this specific columns row in st.container(key=
+       by Streamlit's own default responsive behavior. app.py wraps
+       this specific columns row in st.container(key=
        "results_top_row") so we can target ONLY this row (not every
        columns row in the app) and force it to stay a 2-up row, with
-       both cards shrunk down (smaller icon/rings/text, tighter
-       padding, content stacked vertically inside each card) so two
-       of them still comfortably fit side-by-side on a phone screen. */
+       both cards shrunk down and center-aligned (icon/ring above the
+       text instead of beside it) so two of them sit side-by-side as
+       two clean, equal-looking boxes on a phone screen. */
     .st-key-results_top_row [data-testid="stHorizontalBlock"] {
         flex-wrap: nowrap !important;
         flex-direction: row !important;
@@ -1218,68 +1227,103 @@ a.fnd-source-link:hover {
         width: 50% !important;
         min-width: 0 !important;
         flex: 1 1 0 !important;
+        display: flex !important;
     }
 
-    /* Shrink the verdict card to fit half-width: icon sits above the
-       label/value instead of beside it, and everything gets denser
-       padding + smaller type.
-       FIX: `height: 100%` here relied on the percentage propagating
-       all the way up through Streamlit's nested column wrapper divs
-       (stColumn > element-container > stVerticalBlock > ...) — since
-       none of those ancestors have an explicit height themselves, a
-       percentage height on the card resolves to nothing and the card
-       just shrinks to fit its own (shorter) content instead, which is
-       why the verdict card rendered visibly shorter than the ring
-       card. A shared, explicit `min-height` on both cards sidesteps
-       that chain entirely: whichever card has less content just gets
-       empty bottom space, but both boxes are always the same height. */
+    /* FIX (v2): a fixed `min-height: 210px` worked most of the time,
+       but broke again whenever the ring card's content ran slightly
+       longer than that guessed number (e.g. a raw un-formatted
+       timestamp like "2026-07-12 17:24:10" on the history-detail
+       page wrapping onto an extra line) — the ring card would grow
+       past 210px while the verdict card stayed pinned at exactly
+       210px, so they drifted apart again.
+       Real fix: Streamlit's own flexbox `stretch` on the row above
+       ALREADY makes both columns the same height automatically —
+       the actual bug is that the *visible* card box inside each
+       column never inherits that stretched height, because none of
+       the wrapper divs between the column and our card pass a real
+       (non-"auto") height down the chain. Setting `height: 100%` +
+       `display: flex` on every layer in that chain lets the
+       percentage actually resolve, so each card now fills its column
+       exactly, however tall that column ends up being — no more
+       guessed pixel number, and it stays correct even if one side's
+       content gets a little longer than the other's. Combined with
+       the short-text swap above (Fix 2b), the natural content height
+       of both cards is now much closer to begin with, so they no
+       longer need to stretch dramatically to match each other. */
+    .st-key-results_top_row [data-testid="stColumn"] > div,
+    .st-key-results_top_row [data-testid="stVerticalBlock"],
+    .st-key-results_top_row [data-testid="stVerticalBlockBorderWrapper"],
+    .st-key-results_top_row [data-testid="element-container"],
+    .st-key-results_top_row [data-testid="stMarkdown"],
+    .st-key-results_top_row [data-testid="stMarkdownContainer"] {
+        height: 100% !important;
+        width: 100% !important;
+        display: flex !important;
+        flex-direction: column !important;
+    }
+
+    /* Shrink the verdict card to fit half-width, and center everything
+       (icon above the VERDICT/label/badge block, all text centered)
+       so it visually matches the ring card's own centered layout
+       instead of the two looking like different shapes. */
     .st-key-results_top_row .fnd-verdict-card {
+        flex: 1 !important;
         flex-direction: column;
-        align-items: flex-start;
-        gap: 0.5rem;
-        padding: 0.9rem 0.85rem;
-        min-height: 210px;
+        align-items: center;
+        text-align: center;
+        gap: 0.35rem;
+        padding: 0.85rem 0.6rem;
     }
     .st-key-results_top_row .fnd-verdict-icon {
-        width: 48px;
-        height: 48px;
-        font-size: 1.35rem;
+        width: 42px;
+        height: 42px;
+        font-size: 1.2rem;
+        margin: 0 auto;
     }
     .st-key-results_top_row .fnd-verdict-text {
-        font-size: 1.15rem;
+        font-size: 1rem;
+    }
+    .st-key-results_top_row .fnd-verdict-card .fnd-badge {
+        font-size: 0.68rem;
+        padding: 0.2rem 0.55rem;
     }
 
     /* Shrink the confidence-ring card to match: ring sits above the
-       "Checked At" / "Sources Found" text instead of beside it, ring
-       itself is scaled down, and it shares the SAME min-height as the
-       verdict card above so both boxes always render identically
-       tall regardless of content length. */
+       "Checked" / "Sources" text instead of beside it, ring itself is
+       scaled down further (was 84px), and everything is centered so
+       both cards read as the same compact "icon-on-top, label below"
+       shape at the same overall size. */
     .st-key-results_top_row .fnd-ring-card {
+        flex: 1 !important;
         flex-direction: column;
-        align-items: flex-start;
-        gap: 0.5rem;
-        padding: 0.9rem 0.85rem;
-        min-height: 210px;
+        align-items: center;
+        text-align: center;
+        gap: 0.35rem;
+        padding: 0.85rem 0.6rem;
     }
     .st-key-results_top_row .fnd-ring-wrap {
-        width: 84px !important;
-        height: 84px !important;
+        width: 68px !important;
+        height: 68px !important;
+        margin: 0 auto;
     }
     .st-key-results_top_row .fnd-ring-card > div:last-child {
-        font-size: 0.76rem !important;
+        font-size: 0.7rem !important;
+        text-align: center;
+        width: 100%;
     }
 
     /* --- Fix 6: home page Clear / Check Now row stacking on mobile ---
        Same root cause as Fix 1 and Fix 5: st.columns() auto-stacks
        below 640px by Streamlit's own default responsive behavior,
        which was dropping "Check Now →" onto its own line below a
-       full-width "Clear" button. app.py now wraps this specific
-       columns row in st.container(key="home_action_row") so we can
-       target ONLY this row. The desktop version uses a wide spacer
-       column to push both buttons to the right edge — on a phone
-       there's no room to spare for a spacer, so it's hidden entirely
-       and Clear / Check Now instead split the full row 50/50,
-       Clear on the left and Check Now on the right. */
+       full-width "Clear" button. app.py wraps this specific columns
+       row in st.container(key="home_action_row") so we can target
+       ONLY this row. The desktop version uses a wide spacer column to
+       push both buttons to the right edge — on a phone there's no
+       room to spare for a spacer, so it's hidden entirely and Clear /
+       Check Now instead split the full row 50/50, Clear on the left
+       and Check Now on the right. */
     .st-key-home_action_row [data-testid="stHorizontalBlock"] {
         flex-wrap: nowrap !important;
         flex-direction: row !important;

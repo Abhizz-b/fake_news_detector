@@ -4,6 +4,8 @@ These mirror the sections in the mockup: sidebar nav, verdict card,
 confidence ring, evidence sources list, and history table rows.
 """
 
+from datetime import datetime
+
 import streamlit as st
 
 VERDICT_META = {
@@ -16,6 +18,26 @@ VERDICT_META = {
 
 def verdict_meta(verdict: str) -> dict:
     return VERDICT_META.get((verdict or "").upper(), VERDICT_META["UNVERIFIABLE"])
+
+
+def _short_checked_at(checked_at: str) -> str:
+    """Best-effort compact version of a checked-at timestamp, used only
+    on mobile (<640px) where the full 'YYYY-MM-DD HH:MM:SS' string was
+    forcing the confidence-ring card to grow taller than the verdict
+    card next to it. e.g. '2026-07-12 17:24:10' -> 'Jul 12, 5:24 PM'.
+    Falls back to the original string untouched if it doesn't match
+    the expected format (so nothing breaks if the caller ever passes a
+    differently-formatted string).
+    """
+    if not checked_at:
+        return checked_at
+    for fmt in ("%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M", "%Y-%m-%d"):
+        try:
+            dt = datetime.strptime(checked_at, fmt)
+            return dt.strftime("%b %d, %I:%M %p").replace(" 0", " ")
+        except (ValueError, TypeError):
+            continue
+    return checked_at
 
 
 # ---------------------------------------------------------------------------
@@ -220,11 +242,26 @@ def render_tech_badge():
 # ---------------------------------------------------------------------------
 def render_verdict_card(verdict: str, confidence: int | None = None):
     meta = verdict_meta(verdict)
-    conf_line = f'<div class="fnd-badge {meta["badge"]}">' + (
-        "High Confidence" if (confidence or 0) >= 75 else
-        "Medium Confidence" if (confidence or 0) >= 45 else
+    conf_score = confidence or 0
+    conf_full = (
+        "High Confidence" if conf_score >= 75 else
+        "Medium Confidence" if conf_score >= 45 else
         "Low Confidence"
-    ) + "</div>"
+    )
+    # FIX (mobile): "High Confidence" / "Medium Confidence" / "Low
+    # Confidence" is what was forcing the badge (and the whole card) to
+    # be wider/taller than needed on a phone screen. A short version
+    # ("High" / "Medium" / "Low") is rendered alongside it in a
+    # separate span — styles.py shows only one of the two depending on
+    # viewport width, so desktop keeps the full wording and mobile gets
+    # the compact one.
+    conf_short = "High" if conf_score >= 75 else "Medium" if conf_score >= 45 else "Low"
+    conf_line = (
+        f'<div class="fnd-badge {meta["badge"]}">'
+        f'<span class="fnd-text-full">{conf_full}</span>'
+        f'<span class="fnd-text-short">{conf_short}</span>'
+        f'</div>'
+    )
 
     st.markdown(
         f"""
@@ -263,14 +300,29 @@ def render_confidence_ring(score: int, checked_at: str = "", sources_found: int 
     </svg>
     """
 
+    # FIX (mobile): "Checked At" / "Sources Found" are the full labels
+    # kept for desktop; "Checked" / "Sources" are the compact versions
+    # shown only on phones. Same idea for the timestamp itself — the
+    # full 'YYYY-MM-DD HH:MM:SS' string is kept for desktop, and a short
+    # 'Jul 12, 5:24 PM' version (via _short_checked_at) is shown on
+    # mobile instead. This is what was making the ring card taller than
+    # the verdict card next to it on a phone screen.
+    short_checked_at = _short_checked_at(checked_at)
+
     st.markdown(
         f"""
         <div class="fnd-card fnd-ring-card">
             <div>{svg}</div>
             <div style="font-size:0.85rem;color:#cfcfe0;">
-                <div style="color:#8a8aa3;">Checked At</div>
-                <div style="margin-bottom:0.6rem;">{checked_at}</div>
-                <div style="color:#8a8aa3;">Sources Found</div>
+                <div style="color:#8a8aa3;">
+                    <span class="fnd-text-full">Checked At</span><span class="fnd-text-short">Checked</span>
+                </div>
+                <div style="margin-bottom:0.6rem;">
+                    <span class="fnd-text-full">{checked_at}</span><span class="fnd-text-short">{short_checked_at}</span>
+                </div>
+                <div style="color:#8a8aa3;">
+                    <span class="fnd-text-full">Sources Found</span><span class="fnd-text-short">Sources</span>
+                </div>
                 <div>{sources_found}</div>
             </div>
         </div>
