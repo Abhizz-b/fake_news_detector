@@ -36,11 +36,71 @@ inject_css()
 
 
 # ===========================================================================
-# ---- CONFIG / SETUP LOGIC (unchanged from before) ----
+# ---- CONFIG / SETUP LOGIC ----
+# ===========================================================================
+#
+# DEPLOYMENT FIX: the original flow always sent every visitor through
+# show_initial_config_wizard() to collect their own Groq + Gemini keys,
+# because check_user_config_status() / get_config_parameters() only ever
+# looked at a per-user config file (via user_config.py) and never checked
+# Streamlit Secrets. That's fine for local dev but wrong for a public
+# demo link — nobody visiting the deployed app should have to go generate
+# their own API keys.
+#
+# Fix: if the app owner has set GROQ_API_KEY + GEMINI_API_KEY in Streamlit
+# Community Cloud's "Secrets" (Settings -> Secrets), every visitor
+# transparently uses those shared keys and the wizard is skipped
+# entirely. If secrets are NOT set (e.g. running locally without a
+# secrets.toml), everything falls back to the original per-user wizard
+# flow untouched, so local/dev behavior doesn't change.
 # ===========================================================================
 
+def has_shared_secrets_config() -> bool:
+    """True if the app owner has configured shared Groq + Gemini keys via
+    Streamlit Secrets. When True, ALL visitors use these shared keys
+    automatically and never see the API-key setup wizard."""
+    try:
+        return bool(st.secrets.get("GROQ_API_KEY")) and bool(st.secrets.get("GEMINI_API_KEY"))
+    except Exception:
+        # st.secrets raises/behaves oddly if no secrets.toml exists at all
+        # (e.g. fresh local clone) - treat that as "no shared config".
+        return False
+
+
+def get_shared_config_parameters() -> dict:
+    """Build the same shape of dict as get_config_parameters(), but
+    sourced directly from Streamlit Secrets instead of any per-user
+    config file. This is what powers the public, no-key-required demo."""
+    groq_key = st.secrets["GROQ_API_KEY"]
+    gemini_key = st.secrets["GEMINI_API_KEY"]
+    chat_model = st.secrets.get("GROQ_CHAT_MODEL", "llama-3.3-70b-versatile")
+    embedding_model = "gemini-embedding-001"
+    search_provider = st.secrets.get("SEARCH_PROVIDER", "duckduckgo")
+
+    provider_config = {
+        "base_url": "https://api.groq.com/openai/v1",
+        "api_key": groq_key,
+    }
+
+    return {
+        "provider_key": "groq",
+        "api_base": provider_config["base_url"],
+        "api_key": groq_key,
+        "chat_model": chat_model,
+        "embedding_model": embedding_model,
+        "embedding_api_base": "https://generativelanguage.googleapis.com/v1beta/openai/",
+        "embedding_api_key": gemini_key,
+        "search_provider": search_provider,
+        "selected_language": "en",
+        "provider_config": provider_config,
+    }
+
+
 def check_user_config_status():
-    """Check user config status, determine if config wizard needs to be shown"""
+    """Check whether config is ready and the wizard can be skipped."""
+    if has_shared_secrets_config():
+        return True
+
     from user_config import get_user_config_manager
 
     config_manager = get_user_config_manager()
@@ -417,6 +477,12 @@ def get_search_display_name(search_provider):
 
 
 def get_config_parameters():
+    """Return the active model/search config, preferring the shared
+    Streamlit-Secrets config (public deployment) over any per-user
+    config file (local/manual wizard flow)."""
+    if has_shared_secrets_config():
+        return get_shared_config_parameters()
+
     from user_config import get_user_config_manager
 
     config_manager = get_user_config_manager()
