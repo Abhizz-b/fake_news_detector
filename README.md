@@ -8,7 +8,7 @@ An intelligent news verification system that uses semantic embeddings and large 
 
 **🔗 Live demo:** [fake-news-detector-abhiz.streamlit.app](https://fake-news-detector-abhiz.streamlit.app/) no setup, no API key, just sign up and start checking.
 
-> **Student Project Notice** This is a student project demo built on free-tier AI models. Please verify important claims through official fact checking sources as well.
+> **Student Project Notice** This is a student project demo built on free tier AI models. Please verify important claims through official fact checking sources as well.
 
 ---
 
