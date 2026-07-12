@@ -40,6 +40,22 @@ def _short_checked_at(checked_at: str) -> str:
     return checked_at
 
 
+def _short_date_only(checked_at: str) -> str:
+    """Even more compact — date only, no time (e.g. 'Jul 12'). Used on
+    mobile where the exact minute/second isn't essential info and just
+    added an extra line of height to the confidence-ring card. Falls
+    back to the original string if it doesn't parse."""
+    if not checked_at:
+        return checked_at
+    for fmt in ("%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M", "%Y-%m-%d"):
+        try:
+            dt = datetime.strptime(checked_at, fmt)
+            return dt.strftime("%b %d")
+        except (ValueError, TypeError):
+            continue
+    return checked_at
+
+
 # ---------------------------------------------------------------------------
 # NEW: Minimal top header (replaces the sidebar entirely)
 # ---------------------------------------------------------------------------
@@ -300,30 +316,29 @@ def render_confidence_ring(score: int, checked_at: str = "", sources_found: int 
     </svg>
     """
 
-    # FIX (mobile): "Checked At" / "Sources Found" are the full labels
-    # kept for desktop; "Checked" / "Sources" are the compact versions
-    # shown only on phones. Same idea for the timestamp itself — the
-    # full 'YYYY-MM-DD HH:MM:SS' string is kept for desktop, and a short
-    # 'Jul 12, 5:24 PM' version (via _short_checked_at) is shown on
-    # mobile instead. This is what was making the ring card taller than
-    # the verdict card next to it on a phone screen.
-    short_checked_at = _short_checked_at(checked_at)
+    # FIX (mobile, round 2): the previous mobile version still showed
+    # 4 separate lines (Checked / short-timestamp / Sources / count),
+    # which was still taller than the verdict card next to it. Mobile
+    # now gets ONE combined line instead — "Jul 12 · 11 sources" — via
+    # `.fnd-block-full` / `.fnd-block-short` (a block-level counterpart
+    # to the inline `.fnd-text-full/short` pattern above, since here we
+    # need to swap a whole multi-line block for a single line, not just
+    # a word inline). Desktop is untouched: it still gets the full
+    # "Checked At" / timestamp / "Sources Found" / count, four lines.
+    date_only = _short_date_only(checked_at)
 
     st.markdown(
         f"""
         <div class="fnd-card fnd-ring-card">
             <div>{svg}</div>
-            <div style="font-size:0.85rem;color:#cfcfe0;">
-                <div style="color:#8a8aa3;">
-                    <span class="fnd-text-full">Checked At</span><span class="fnd-text-short">Checked</span>
-                </div>
-                <div style="margin-bottom:0.6rem;">
-                    <span class="fnd-text-full">{checked_at}</span><span class="fnd-text-short">{short_checked_at}</span>
-                </div>
-                <div style="color:#8a8aa3;">
-                    <span class="fnd-text-full">Sources Found</span><span class="fnd-text-short">Sources</span>
-                </div>
+            <div class="fnd-block-full" style="font-size:0.85rem;color:#cfcfe0;">
+                <div style="color:#8a8aa3;">Checked At</div>
+                <div style="margin-bottom:0.6rem;">{checked_at}</div>
+                <div style="color:#8a8aa3;">Sources Found</div>
                 <div>{sources_found}</div>
+            </div>
+            <div class="fnd-block-short" style="font-size:0.78rem;color:#cfcfe0;">
+                <div>{date_only} <span style="color:#8a8aa3;">&middot; {sources_found} sources</span></div>
             </div>
         </div>
         """,

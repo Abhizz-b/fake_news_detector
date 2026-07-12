@@ -30,50 +30,28 @@ html, body,
 }
 #MainMenu {visibility: hidden;}
 footer {visibility: hidden;}
-/* FIX: visibility:hidden still reserves the element's box (that's the
-   empty rounded rectangle that was floating above "How it works").
-   display:none removes it from layout entirely. */
 [data-testid="stToolbar"] {
     display: none !important;
 }
 [data-testid="stStatusWidget"] {
     display: none !important;
 }
-/* FIX: these reserve empty space even when just visibility:hidden (that
-   was likely the empty rounded box floating above "How it works" in the
-   screenshot). display:none removes them from layout entirely. */
 [data-testid="stHeader"] {
     display: none !important;
 }
 [data-testid="stDecoration"] {
     display: none !important;
 }
-/* FIX: Streamlit auto-adds a small anchor/link icon next to any
-   h1-h6 it renders (even inside raw unsafe_allow_html HTML like our
-   hero heading) — this was the stray chain-link icon floating next
-   to "Verify everything." Hiding it globally since we don't use
-   deep-linkable headers anywhere in this app. */
 [data-testid="stHeaderActionElements"] {
     display: none !important;
 }
 
-/* FIX: was 2rem, pushing the whole app (header + hero) down and
-   forcing an extra scroll to see everything. Trimmed to bring the
-   header close to the top of the viewport. */
 .block-container {
     padding-top: 0.4rem;
     padding-bottom: 1rem;
     animation: fndFadeIn 0.4s ease-out;
 }
 
-/* =========================================================================
-   SIDEBAR
-   We drive our own collapse/expand instead of Streamlit's native control
-   (that was the source of the old "sidebar disappears, can't reopen"
-   bug). The native collapse arrow + resize handle are hidden here; the
-   actual show/hide logic and the two custom toggle buttons are handled
-   in app.py / components.py via session_state.
-   ========================================================================= */
 [data-testid="collapsedControl"] {
     display: none !important;
 }
@@ -87,12 +65,6 @@ section[data-testid="stSidebar"] button[kind="header"] {
     display: none !important;
 }
 
-/* FIX: added `transition` on width/min-width/max-width so collapse <->
-   expand animates smoothly instead of snapping instantly between
-   280px and 60px. `overflow: hidden` prevents inner content from
-   spilling out mid-transition while the sidebar is narrower than its
-   content. The inner wrapper gets its own opacity transition so
-   content fades rather than abruptly popping in/out. */
 section[data-testid="stSidebar"] {
     min-width: 280px !important;
     max-width: 280px !important;
@@ -109,11 +81,6 @@ section[data-testid="stSidebar"] > div {
     transition: opacity 0.2s ease;
 }
 
-/* FIX: collapse button (expanded state) and expand button (collapsed
-   state) now share one style block so they look and feel identical —
-   only the glyph inside differs (rendered via components.py), and even
-   that now uses matching chevron glyphs ("«" / "»") instead of two
-   visually unrelated icons ("⟨⟨" vs "☰"). */
 .st-key-sidebar_expand_btn button,
 .st-key-sidebar_collapse_btn button {
     width: 42px !important;
@@ -176,7 +143,6 @@ section[data-testid="stSidebar"] > div {
     flex-shrink: 0;
 }
 
-/* Sidebar nav buttons */
 section[data-testid="stSidebar"] .stButton button {
     width: 100%;
     text-align: left;
@@ -203,14 +169,11 @@ section[data-testid="stSidebar"] .stButton button[kind="primary"] {
     text-align: left;
     box-shadow: 0 4px 14px rgba(139, 92, 246, 0.25);
 }
-/* the collapse/expand buttons also match .stButton above by default, so
-   we re-assert their compact style with higher specificity */
 section[data-testid="stSidebar"] .st-key-sidebar_collapse_btn button,
 section[data-testid="stSidebar"] .st-key-sidebar_expand_btn button {
     width: 42px !important;
 }
 
-/* Sidebar user card */
 .fnd-user-card {
     display: flex;
     align-items: center;
@@ -298,61 +261,17 @@ section[data-testid="stSidebar"] .st-key-sidebar_expand_btn button {
     z-index: 1;
 }
 
-/* =========================================================================
-   NEW: Slim top header (replaces the sidebar entirely)
-   Left: a plain outline search-glass icon + wordmark. Right: a circular
-   avatar (rendered via st.popover in components.py) that opens a small
-   History/Logout menu on click — there's no persistent nav rail anymore.
-   ========================================================================= */
-/* =========================================================================
-   FIX: Navbar container — previously had its own solid background
-   (#0e0c18), which read as a separate "search bar" card floating on
-   top of the page instead of a proper header. Now it's fully
-   transparent (matches the page background exactly, since it's the
-   same stack the .stApp gradient/base-color sits on), and the only
-   separation from the hero content below is a single, very
-   low-opacity 1px line — matching the approved mockup exactly.
-   FIX (round 2): padding/margin trimmed down — the navbar was
-   sitting too far from the top of the page and leaving too big a
-   gap above the "Think twice." headline below it.
-   ========================================================================= */
 .st-key-app_header_bar {
     background: transparent;
     padding: 0.55rem 0.5rem;
     margin-bottom: 0.2rem;
     position: relative;
 }
-/* =========================================================================
-   Avatar trigger: circle avatar + separate chevron, both inside a
-   rounded "pill" — matching the approved mockup. This time done more
-   carefully than before: `display: inline-flex` is applied ONLY to
-   the outer [data-testid="stPopover"] container (a real box with real
-   dimensions — safe, doesn't break Streamlit's position measurement).
-   We do NOT use `display: contents` on the inner wrapper div anymore —
-   that was the actual change that broke the dropdown's positioning
-   last time (it removes the element's box entirely, so
-   getBoundingClientRect() returned nothing usable). Leaving that inner
-   div's own display untouched keeps positioning fully stable while
-   still giving us the pill look via simple flex + background/border/
-   radius on the outer element.
-   ========================================================================= */
 [data-testid="stPopover"] {
     display: inline-flex;
     align-items: center;
     margin-right: -0.4rem;
 }
-/* FIX: a plain border-bottom on this element only spans the padded
-   block-container width, not the full page. This pseudo-element
-   breaks out to 100vw and re-centers itself so the separator line
-   touches the true left and right edges of the browser window,
-   matching the reference mockup. */
-/* FIX (final): this used to break out to width:100vw + translateX(-50%)
-   to touch the true browser edges — but 100vw includes the vertical
-   scrollbar's own width, so on most screens it overflowed a few
-   pixels past the right edge and forced a horizontal scrollbar for
-   the entire page. A plain 100%-width line (spanning its own already
-   full-bleed parent) gives the same visual edge-to-edge separator
-   with zero risk of overflow. */
 .st-key-app_header_bar::after {
     content: "";
     position: absolute;
@@ -377,11 +296,6 @@ section[data-testid="stSidebar"] .st-key-sidebar_expand_btn button {
     color: #a78bfa;
     flex-shrink: 0;
 }
-/* FIX: the wordmark was plain unstyled text inheriting a generic
-   sans-serif — looked flat and forgettable for an app name/logo.
-   Now it's bolder, larger, tighter letter-spacing, and picks up the
-   same soft purple gradient used on "Verify everything." in the hero,
-   so it reads as an actual brand mark instead of a plain label. */
 .fnd-brand-wordmark {
     font-size: 1.2rem;
     font-weight: 800;
@@ -392,14 +306,6 @@ section[data-testid="stSidebar"] .st-key-sidebar_expand_btn button {
     color: transparent;
 }
 
-/* Avatar circle button itself — plain, bold initial, no icon overlap.
-   FIX: Streamlit's popover trigger button can carry its own native
-   disclosure marker/pseudo-content depending on browser + baseweb
-   version — this is what was showing up as a *second*, stray gray
-   triangle outside the circle in addition to our own intentional
-   chevron on [data-testid="stPopover"]::after above. Forcing both
-   ::before and ::after to `content: none` directly on the button
-   guarantees only our single external chevron ever renders. */
 [data-testid="stPopover"] button {
     display: flex !important;
     align-items: center !important;
@@ -418,11 +324,6 @@ section[data-testid="stSidebar"] .st-key-sidebar_expand_btn button {
 [data-testid="stPopover"] button:hover {
     border-color: #3a3350 !important;
 }
-/* The letter itself: Streamlit renders the button's text label inside
-   its own inner wrapper (markdown container / <p>). THIS inner element
-   — not the button — is what gets the circular purple-gradient avatar
-   look, fixed to a neat 34x34 circle with the bold initial centered
-   inside it. */
 [data-testid="stPopover"] button [data-testid="stMarkdownContainer"],
 [data-testid="stPopover"] button [data-testid="stMarkdownContainer"] p {
     width: 34px !important;
@@ -440,12 +341,6 @@ section[data-testid="stSidebar"] .st-key-sidebar_expand_btn button {
     margin: 0 !important;
     line-height: 1 !important;
 }
-/* FIX (round 3): rather than hiding Streamlit's native trigger icon
-   (that just made the chevron decorative/unclickable), we keep it —
-   it's a real child of the real <button>, so it's clickable by
-   definition — and simply restyle its color/size so it reads as a
-   quiet chevron sitting in the pill's empty space to the right of the
-   circle, instead of an oversized icon crammed inside the circle. */
 [data-testid="stPopover"] button svg,
 [data-testid="stPopover"] button [data-testid*="Icon"] {
     width: 14px !important;
@@ -454,12 +349,6 @@ section[data-testid="stSidebar"] .st-key-sidebar_expand_btn button {
     flex-shrink: 0;
 }
 
-/* =========================================================================
-   NEW: Account dropdown card — matches the approved mockup: rounded
-   card, name + role header block, thin dividers, and quiet plain-text
-   rows for History/Logout (no icons — see components.py), with Logout
-   styled as a destructive action.
-   ========================================================================= */
 [data-testid="stPopoverBody"] {
     background: #15111f !important;
     border: 1px solid #29233b !important;
@@ -494,24 +383,6 @@ section[data-testid="stSidebar"] .st-key-sidebar_expand_btn button {
     z-index: 2;
 }
 
-/* FIX: excessive gap between the History row and the Logout row.
-   Streamlit wraps each st.button in its own element-container with a
-   default vertical gap/margin meant for full-page layouts, which
-   looked huge inside this small popover. Tightening the vertical
-   block gap and zeroing each element-container's own margin fixes
-   the spacing without touching the divider's own margin above.
-   FIX (round 2): gap was too tight (0.1rem) — the History button's
-   own hover-highlight box was tall enough to visually overlap/bleed
-   over the header divider and the divider above Logout.
-   FIX (round 3): 0.3rem gap + 0.45rem divider margins were still not
-   quite enough — the History button's hover-highlight box (which
-   extends slightly beyond the button's own text padding, since the
-   whole button element gets the background on hover, not just its
-   inner label) was still visually grazing the header divider above
-   it. Pushed both the header's margin-bottom and each divider's own
-   margin out further (0.7rem / 0.6rem) so there's unambiguous
-   clearance between every divider line and the nearest button's
-   hover box, in both directions. */
 [data-testid="stPopoverBody"] [data-testid="stVerticalBlock"] {
     gap: 0.35rem !important;
 }
@@ -519,8 +390,6 @@ section[data-testid="stSidebar"] .st-key-sidebar_expand_btn button {
     margin: 0 !important;
 }
 
-/* Restyle the History / Logout st.button rows inside the popover from
-   generic Streamlit buttons into quiet, left-aligned menu items. */
 [data-testid="stPopoverBody"] .stButton button {
     background: transparent !important;
     border: none !important;
@@ -532,13 +401,6 @@ section[data-testid="stSidebar"] .st-key-sidebar_expand_btn button {
     border-radius: 9px !important;
     box-shadow: none !important;
 }
-/* FIX: text-align/justify-content on the button itself weren't enough —
-   Streamlit renders the button's label inside a nested
-   [data-testid="stMarkdownContainer"] > p, which carries its own
-   center-aligned default and was winning over the outer button's
-   text-align. Forcing left-align (and full width so there's room to
-   actually sit left) on that inner element is what actually moves
-   "History"/"Logout" to the left instead of the middle. */
 [data-testid="stPopoverBody"] .stButton button p,
 [data-testid="stPopoverBody"] .stButton button div {
     text-align: left !important;
@@ -548,14 +410,6 @@ section[data-testid="stSidebar"] .st-key-sidebar_expand_btn button {
     background: rgba(139, 92, 246, 0.12) !important;
     color: #fff !important;
 }
-/* FIX: Logout wasn't rendering red — `[data-testid="stPopoverBody"]
-   .stButton button` above has higher CSS specificity (attribute +
-   class + element = 0,2,1) than the old `.st-key-account_menu_logout_btn
-   button` rule (class + element = 0,1,1), so the generic gray color
-   always won even with !important on both sides (equal !important
-   weight falls back to specificity, not source order). Prefixing with
-   the same [data-testid="stPopoverBody"] attribute selector brings
-   this rule to equal-or-higher specificity so red actually applies. */
 [data-testid="stPopoverBody"] .st-key-account_menu_logout_btn button {
     color: #f87171 !important;
 }
@@ -564,19 +418,6 @@ section[data-testid="stSidebar"] .st-key-sidebar_expand_btn button {
     color: #f87171 !important;
 }
 
-/* =========================================================================
-   NEW: Minimal, vertically-centered home page hero
-   ("Think Twice. Verify Everything.")
-   The whole block is wrapped in st.container(key="home_center_wrap") in
-   app.py; this class turns that wrapper into a flex column that centers
-   its children both horizontally and vertically, giving the generous,
-   uncluttered spacing from the approved mockup instead of everything
-   being pinned to the top of the page.
-   FIX: top padding was 4rem, which — stacked on top of the header's
-   own padding/margin above it — created a huge, page-lengthening gap
-   between the navbar and "Think twice." Reduced so the hero sits right
-   under the header without needing to scroll to see the whole page.
-   ========================================================================= */
 .st-key-home_center_wrap {
     display: flex !important;
     flex-direction: column;
@@ -585,13 +426,6 @@ section[data-testid="stSidebar"] .st-key-sidebar_expand_btn button {
     margin: 0 auto;
     padding: 0.4rem 2rem 1rem;
 }
-/* FIX: gap was forced down to 0.4rem AND every element's own margin
-   to 0 — combined, that was too aggressive and caused the Clear/Check
-   Now button row to overlap the pills row above it. Backing off to a
-   moderate gap (still much tighter than Streamlit's ~1rem default,
-   but with enough room that rows don't collide) and dropping the
-   margin-bottom:0 override entirely fixes the overlap while keeping
-   the page compact. */
 .st-key-home_center_wrap [data-testid="stVerticalBlock"] {
     gap: 0.7rem !important;
 }
@@ -624,19 +458,11 @@ section[data-testid="stSidebar"] .st-key-sidebar_expand_btn button {
     margin: 0.4rem auto 0;
 }
 
-/* The claim textarea + quick-action pills + Clear/Check Now row all
-   live inside this shell, capped at the same 880px the mockup uses —
-   this (not a per-widget max-width) is what controls the box's width,
-   so it stays wide and spacious instead of looking cramped. */
 .st-key-claim_shell {
     width: 100%;
     max-width: 880px;
 }
 
-/* Quick-action pills below the claim textarea — now plain static divs
-   (see app.py), not buttons. No hover state, no glow, no pointer
-   cursor: they're purely decorative labels, so nothing here reacts to
-   the mouse at all. */
 .fnd-static-pill-row {
     display: flex;
     gap: 0.6rem;
@@ -655,25 +481,15 @@ section[data-testid="stSidebar"] .st-key-sidebar_expand_btn button {
     cursor: default;
     user-select: none;
 }
-/* Desktop/tablet default: show the full label, hide the short one.
-   The mobile media query below flips this. */
 .fnd-pill-full { display: inline; }
 .fnd-pill-short { display: none; }
 
-/* =========================================================================
-   NEW: generic full-text / short-text toggle.
-   Used anywhere a label or value has a long desktop wording and a
-   compact mobile equivalent (e.g. "High Confidence" -> "High",
-   "Checked At" -> "Checked", a full timestamp -> a short one). Default
-   (desktop/tablet) shows the full version; the mobile media query
-   below flips this, exactly like the .fnd-pill-full/short pattern
-   above already does for the home-page quick-action pills.
-   ========================================================================= */
 .fnd-text-full { display: inline; }
 .fnd-text-short { display: none; }
 
-/* Minimal home page: the single claim/article box (headline or full
-   article — same field), with a soft purple glow border */
+.fnd-block-full { display: block; }
+.fnd-block-short { display: none; }
+
 .st-key-claim_input_box textarea {
     border-radius: 12px !important;
     border: 1px solid #29233b !important;
@@ -690,8 +506,6 @@ section[data-testid="stSidebar"] .st-key-sidebar_expand_btn button {
     border-color: #8b5cf6 !important;
 }
 
-/* Minimal home page: Clear button styled as a quiet outline button
-   (rather than default Streamlit "secondary" gray) */
 .st-key-clear_home_btn button {
     background: #14141f !important;
     border: 1px solid #2a2a3a !important;
@@ -704,12 +518,6 @@ section[data-testid="stSidebar"] .st-key-sidebar_expand_btn button {
     color: #fff !important;
 }
 
-/* FIX: Clear and Check Now previously inherited the generic
-   .stButton hover rules (translateY(-1px) "lift" on hover), which
-   read as an unwanted moving/floating animation. Both buttons now get
-   `transform: none` on hover (cancelling that lift) and instead only
-   animate on :active — a quick scale-down "press" the instant the
-   button is clicked, with nothing happening on hover at all. */
 .st-key-clear_home_btn button,
 .st-key-check_now_btn button {
     transition: transform 0.08s ease, box-shadow 0.15s ease, background 0.2s ease, border-color 0.15s ease, color 0.15s ease !important;
@@ -724,16 +532,6 @@ section[data-testid="stSidebar"] .st-key-sidebar_expand_btn button {
     transform: scale(0.96) !important;
 }
 
-/* =========================================================================
-   NEW: Hero tagline -> status line morph (home page).
-   The idle tagline (<p class="fnd-hero-tagline">) and the loading status
-   line (<div class="fnd-status-line">) are swapped in place inside the
-   same st.empty() placeholder from app.py, so only one is ever in the
-   DOM at a time — the fade-in here is what makes that swap read as a
-   smooth morph instead of an abrupt content jump. This replaces the
-   old st.spinner() boxes + the separate st.info()/st.success() search
-   status boxes that used to stack up below the Check Now button.
-   ========================================================================= */
 .fnd-status-line {
     display: flex;
     align-items: center;
@@ -763,7 +561,6 @@ section[data-testid="stSidebar"] .st-key-sidebar_expand_btn button {
     to { transform: rotate(360deg); }
 }
 
-/* ---------- Input card focus glow (results/other pages) ---------- */
 .stTextArea textarea {
     border-radius: 12px !important;
     transition: box-shadow 0.2s ease, border-color 0.2s ease;
@@ -773,14 +570,6 @@ section[data-testid="stSidebar"] .st-key-sidebar_expand_btn button {
     border-color: #8b5cf6 !important;
 }
 
-/* ---------- How it works: card heading + steps ----------
-   FIX: previously each step was rendered via its own st.markdown()
-   call, which meant Streamlit injected its own default block spacing
-   between them — on top of our own margins — making the gaps look
-   uneven and "ugly". Now all steps render inside a single markdown
-   call (see components.py) so spacing is fully controlled by this
-   CSS. A thin connecting line between icons gives it a cleaner,
-   timeline-style feel instead of three disconnected rows. */
 .fnd-card-heading {
     font-weight: 700;
     font-size: 1.05rem;
@@ -843,7 +632,6 @@ section[data-testid="stSidebar"] .st-key-sidebar_expand_btn button {
     height: 6px;
 }
 
-/* ---------- Tech badge chips ("Powered by") ---------- */
 .fnd-tech-row {
     display: flex;
     flex-wrap: wrap;
@@ -864,7 +652,6 @@ section[data-testid="stSidebar"] .st-key-sidebar_expand_btn button {
     transform: translateY(-2px);
 }
 
-/* ---------- Verdict badges ---------- */
 .fnd-badge {
     display: inline-block;
     padding: 0.25rem 0.7rem;
@@ -877,11 +664,6 @@ section[data-testid="stSidebar"] .st-key-sidebar_expand_btn button {
 .fnd-badge-partial { background: #3a2f10; color: #fbbf24; }
 .fnd-badge-unverifiable { background: #202030; color: #a1a1c0; }
 
-/* ---------- Results row: verdict card + confidence ring ----------
-   vertical_alignment="center" on st.columns() (set in app.py) takes
-   care of matching the two cards vertically; these rules just make
-   sure each card's own content is centered and doesn't leave dead
-   space at the bottom. */
 .fnd-verdict-card {
     border-radius: 16px;
     padding: 1.5rem 1.6rem;
@@ -925,7 +707,6 @@ section[data-testid="stSidebar"] .st-key-sidebar_expand_btn button {
     transition: stroke-dashoffset 0.6s ease-out;
 }
 
-/* ---------- Source rows ---------- */
 .fnd-source-row {
     display: flex;
     align-items: center;
@@ -945,32 +726,12 @@ section[data-testid="stSidebar"] .st-key-sidebar_expand_btn button {
     font-size: 0.9rem;
     flex-shrink: 0;
 }
-/* FIX: the text block next to the source icon (name/link + "Web
-   source" tag) had no width constraint of its own, so it could never
-   shrink below its content's natural width — a long unbroken URL
-   would just push past the edge of the card instead of wrapping,
-   which is what caused the 5th/6th source links to visibly overflow
-   past the right edge of the evidence card. `flex: 1` lets this box
-   take the remaining row width (instead of only its content width)
-   and `min-width: 0` is the actual fix that lets a flex child shrink
-   *below* its content's intrinsic width so wrapping can kick in at
-   all — without it, min-width defaults to `auto` and flex items
-   refuse to shrink past their longest unbreakable text. */
 .fnd-source-body {
     flex: 1;
     min-width: 0;
 }
 .fnd-source-name { font-weight: 600; font-size: 0.88rem; color: #f0eefc; }
 .fnd-source-tag { color: #8a8aa3; font-size: 0.75rem; }
-/* NEW: clickable evidence source link — was plain unclickable text.
-   Styled to look identical to the old plain text (same color/weight)
-   so nothing shifts visually, but now underlines on hover and shows
-   a pointer cursor to signal it's actually clickable.
-   FIX: added word-break/overflow-wrap so a long URL with no natural
-   spaces breaks and wraps onto multiple lines inside the card instead
-   of overflowing past its right edge (same overflow bug as above,
-   this is the other half of the fix — the container can now shrink,
-   and the text itself can now break to fill that shrunk container). */
 a.fnd-source-link {
     display: inline-block;
     max-width: 100%;
@@ -985,7 +746,6 @@ a.fnd-source-link:hover {
     text-decoration: underline;
 }
 
-/* ---------- History table ---------- */
 .fnd-history-header {
     display: grid;
     grid-template-columns: 3fr 1fr 1.2fr 0.8fr 1.4fr;
@@ -1008,15 +768,6 @@ a.fnd-source-link:hover {
     animation: fndFadeUp 0.35s ease-out both;
 }
 
-/* =========================================================================
-   NEW: "Back to Home" button on results/history-detail pages.
-   FIX: was inheriting the generic .stButton > button[kind="secondary"]
-   hover rule (translateY(-1px) lift), which read as an unwanted
-   floating/moving animation on hover — same class of issue as the old
-   Clear/Check Now hover bug. Same fix pattern here: hover is fully
-   neutralized (no lift, no color/border change) and only :active gets
-   a quick scale-down "press" animation on click.
-   ========================================================================= */
 .st-key-back_to_home_btn button {
     transition: transform 0.08s ease !important;
 }
@@ -1028,15 +779,6 @@ a.fnd-source-link:hover {
     transform: scale(0.96) !important;
 }
 
-/* =========================================================================
-   FIX: Themed loading spinner + status alerts.
-   Previously st.spinner() rendered as Streamlit's plain default gray
-   box, full-width, with no styling — which is what looked "ugly" and
-   out of place below the input card. Now it matches the app's dark
-   card aesthetic and (combined with the app.py fix that moves
-   run_fact_check() inside the left column) stays constrained to the
-   same width as the claim input card instead of spanning the page.
-   ========================================================================= */
 [data-testid="stSpinner"] {
     background: #14141f;
     border: 1px solid #23232f;
@@ -1059,7 +801,6 @@ a.fnd-source-link:hover {
     animation: fndFadeUp 0.3s ease-out both;
 }
 
-/* ---------- Keyframes ---------- */
 @keyframes fndFadeIn {
     from { opacity: 0; }
     to { opacity: 1; }
@@ -1073,29 +814,8 @@ a.fnd-source-link:hover {
     to { opacity: 1; transform: scale(1); }
 }
 
-/* =========================================================================
-   MOBILE RESPONSIVENESS
-   Everything above this point was designed/tested on a laptop-width
-   viewport. These overrides kick in only under 640px (phones) and fix
-   the top navbar wrapping the avatar below the wordmark, the home-page
-   quick-action pills wrapping text unevenly, long evidence-source URLs
-   overflowing their card, the history table's 5-column grid getting
-   crushed into an unreadable single line, and the results-page verdict
-   card + confidence ring stacking on top of each other / ending up
-   unequal sizes instead of sitting side-by-side as two clean, equal,
-   compact boxes.
-   Nothing above is touched for desktop/tablet — these rules only
-   apply below the 640px breakpoint.
-   ========================================================================= */
 @media (max-width: 640px) {
 
-    /* --- Fix 1: navbar avatar dropping below the wordmark ---
-       Streamlit auto-stacks st.columns() into a vertical layout once
-       the viewport gets narrow (its own built-in responsive behavior),
-       which is exactly what was pushing the avatar down onto its own
-       line under "Fake News Detector". We only want that default
-       stacking disabled inside OUR header row, so the avatar always
-       stays pinned to the right. */
     .st-key-app_header_bar [data-testid="stHorizontalBlock"] {
         flex-wrap: nowrap !important;
         flex-direction: row !important;
@@ -1113,8 +833,6 @@ a.fnd-source-link:hover {
     .st-key-app_header_bar [data-testid="stColumn"]:last-child {
         flex: 0 0 auto !important;
     }
-    /* wordmark truncates with an ellipsis instead of wrapping or
-       pushing the avatar out of the row on very narrow phones */
     .fnd-header-brand {
         min-width: 0;
     }
@@ -1128,13 +846,6 @@ a.fnd-source-link:hover {
         font-size: 1.05rem;
     }
 
-    /* --- Fix 2: home page quick-action pills ---
-       FIX (v3): full labels physically can't fit on one line at
-       phone widths no matter the wrap point. Below 640px we show the
-       short label instead (see the .fnd-pill-full / .fnd-pill-short
-       spans added in app.py) and keep everything on a single line —
-       no wrapping needed at all, so every pill renders at the same
-       clean single-line height. */
     .fnd-pill-full { display: none; }
     .fnd-pill-short { display: inline; }
     .fnd-static-pill-row {
@@ -1153,35 +864,16 @@ a.fnd-source-link:hover {
         justify-content: center;
     }
 
-    /* --- Fix 2b: generic full-text / short-text toggle ---
-       Flips every .fnd-text-full / .fnd-text-short pair used across
-       the app (verdict-card confidence label, "Checked At" / "Sources
-       Found" labels + the timestamp value on the results page) so
-       phones get the compact wording and desktop keeps the full one. */
     .fnd-text-full { display: none !important; }
     .fnd-text-short { display: inline !important; }
+    .fnd-block-full { display: none !important; }
+    .fnd-block-short { display: block !important; }
 
-    /* --- Fix 3: long evidence-source URLs overflowing the card ---
-       handled mainly via .fnd-source-body / a.fnd-source-link above
-       (flex-shrink + word-break), those rules already apply at every
-       width. Here we just tighten the row's own gap/padding a bit so
-       there's more room for the (now-wrapping) link text on a narrow
-       screen. */
     .fnd-source-row {
         gap: 0.5rem;
         align-items: flex-start;
     }
 
-    /* --- Fix 4: history table crushed into one unreadable row ---
-       The 5-column grid (Claim / Verdict / Confidence / Sources /
-       Checked At) has no room to breathe at phone widths — columns
-       overlap and the date/time wraps mid-number. Below 640px we drop
-       the grid entirely: the column header row is hidden (it no
-       longer matches anything visually), and each history row
-       becomes a simple stacked list, one field per line, with a small
-       uppercase label (from the `data-label` attribute set in
-       components.py) standing in for the column header that's now
-       gone. */
     .fnd-history-header {
         display: none;
     }
@@ -1206,51 +898,35 @@ a.fnd-source-link:hover {
         margin-bottom: 0.2rem;
     }
 
-    /* --- Fix 5: results-page verdict card + confidence ring
-       stacking / ending up unequal sizes instead of sitting neatly
-       side-by-side ---
-       Same root cause as Fix 1: st.columns() auto-stacks below 640px
-       by Streamlit's own default responsive behavior. app.py wraps
-       this specific columns row in st.container(key=
-       "results_top_row") so we can target ONLY this row (not every
-       columns row in the app) and force it to stay a 2-up row, with
-       both cards shrunk down and center-aligned (icon/ring above the
-       text instead of beside it) so two of them sit side-by-side as
-       two clean, equal-looking boxes on a phone screen. */
+    /* --- Fix 5: verdict card + confidence ring stacking / ending up
+       unequal sizes instead of sitting neatly side-by-side ---
+       `:has(.fnd-verdict-card)` finds whichever
+       [data-testid="stHorizontalBlock"] actually contains the verdict
+       card, on ANY page, so this applies everywhere the pair is
+       rendered (results page AND history-detail page alike). */
+    [data-testid="stHorizontalBlock"]:has(.fnd-verdict-card),
     .st-key-results_top_row [data-testid="stHorizontalBlock"] {
         flex-wrap: nowrap !important;
         flex-direction: row !important;
         align-items: stretch !important;
         gap: 0.5rem !important;
+        width: 100% !important;
+        max-width: 100% !important;
     }
+    [data-testid="stHorizontalBlock"]:has(.fnd-verdict-card) > [data-testid="stColumn"],
     .st-key-results_top_row [data-testid="stColumn"] {
         width: 50% !important;
+        max-width: 50% !important;
         min-width: 0 !important;
         flex: 1 1 0 !important;
         display: flex !important;
     }
-
-    /* FIX (v2): a fixed `min-height: 210px` worked most of the time,
-       but broke again whenever the ring card's content ran slightly
-       longer than that guessed number (e.g. a raw un-formatted
-       timestamp like "2026-07-12 17:24:10" on the history-detail
-       page wrapping onto an extra line) — the ring card would grow
-       past 210px while the verdict card stayed pinned at exactly
-       210px, so they drifted apart again.
-       Real fix: Streamlit's own flexbox `stretch` on the row above
-       ALREADY makes both columns the same height automatically —
-       the actual bug is that the *visible* card box inside each
-       column never inherits that stretched height, because none of
-       the wrapper divs between the column and our card pass a real
-       (non-"auto") height down the chain. Setting `height: 100%` +
-       `display: flex` on every layer in that chain lets the
-       percentage actually resolve, so each card now fills its column
-       exactly, however tall that column ends up being — no more
-       guessed pixel number, and it stays correct even if one side's
-       content gets a little longer than the other's. Combined with
-       the short-text swap above (Fix 2b), the natural content height
-       of both cards is now much closer to begin with, so they no
-       longer need to stretch dramatically to match each other. */
+    [data-testid="stHorizontalBlock"]:has(.fnd-verdict-card) [data-testid="stColumn"] > div,
+    [data-testid="stHorizontalBlock"]:has(.fnd-verdict-card) [data-testid="stVerticalBlock"],
+    [data-testid="stHorizontalBlock"]:has(.fnd-verdict-card) [data-testid="stVerticalBlockBorderWrapper"],
+    [data-testid="stHorizontalBlock"]:has(.fnd-verdict-card) [data-testid="element-container"],
+    [data-testid="stHorizontalBlock"]:has(.fnd-verdict-card) [data-testid="stMarkdown"],
+    [data-testid="stHorizontalBlock"]:has(.fnd-verdict-card) [data-testid="stMarkdownContainer"],
     .st-key-results_top_row [data-testid="stColumn"] > div,
     .st-key-results_top_row [data-testid="stVerticalBlock"],
     .st-key-results_top_row [data-testid="stVerticalBlockBorderWrapper"],
@@ -1259,71 +935,97 @@ a.fnd-source-link:hover {
     .st-key-results_top_row [data-testid="stMarkdownContainer"] {
         height: 100% !important;
         width: 100% !important;
+        max-width: 100% !important;
         display: flex !important;
         flex-direction: column !important;
+        box-sizing: border-box !important;
     }
 
-    /* Shrink the verdict card to fit half-width, and center everything
-       (icon above the VERDICT/label/badge block, all text centered)
-       so it visually matches the ring card's own centered layout
-       instead of the two looking like different shapes. */
-    .st-key-results_top_row .fnd-verdict-card {
-        flex: 1 !important;
+    /* FIX (v4): the previous version used `overflow: hidden` together
+       with a rigid `height: 135px`. On the history-detail page the
+       actual rendered content (icon + "VERDICT" + "TRUE" + badge, or
+       ring + date/sources line) was very slightly taller than 135px,
+       so overflow:hidden silently CUT OFF most of the box instead of
+       showing it — that's what made the cards look empty/collapsed.
+       Removing overflow:hidden and switching from a fixed `height` to
+       `min-height` + `height: 100%` fixes this two ways at once:
+       content is never clipped again, AND both cards still end up
+       exactly the same height as each other, because `height: 100%`
+       makes each card fill its own column, and the column row above
+       has `align-items: stretch` — so both columns (and therefore
+       both cards) automatically match whichever one is naturally
+       tallest, with `min-height: 135px` as a floor so they never look
+       too short either. */
+    .fnd-verdict-card,
+    .fnd-ring-card {
+        box-sizing: border-box;
+    }
+
+    .fnd-verdict-card {
+        background: #14141f !important;
+        border: 1px solid #23232f !important;
+    }
+
+    /* `width: 100%` (not a fixed px width) makes each card fill its
+       own 50%-width column exactly, so both boxes are always
+       identically sized and aligned no matter the exact viewport
+       width. Nothing rendered *inside* either card changes. */
+    .fnd-verdict-card {
+        flex: 1 1 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        height: 100% !important;
+        min-height: 135px !important;
         flex-direction: column;
         align-items: center;
+        justify-content: center;
         text-align: center;
-        gap: 0.35rem;
-        padding: 0.85rem 0.6rem;
+        gap: 0.15rem;
+        padding: 0.6rem 0.6rem;
     }
-    .st-key-results_top_row .fnd-verdict-icon {
-        width: 42px;
-        height: 42px;
-        font-size: 1.2rem;
+    .fnd-verdict-icon {
+        width: 36px;
+        height: 36px;
+        font-size: 1.05rem;
         margin: 0 auto;
     }
-    .st-key-results_top_row .fnd-verdict-text {
+    .fnd-verdict-text {
         font-size: 1rem;
     }
-    .st-key-results_top_row .fnd-verdict-card .fnd-badge {
+    .fnd-verdict-card .fnd-badge {
         font-size: 0.68rem;
         padding: 0.2rem 0.55rem;
     }
 
-    /* Shrink the confidence-ring card to match: ring sits above the
-       "Checked" / "Sources" text instead of beside it, ring itself is
-       scaled down further (was 84px), and everything is centered so
-       both cards read as the same compact "icon-on-top, label below"
-       shape at the same overall size. */
-    .st-key-results_top_row .fnd-ring-card {
-        flex: 1 !important;
+    /* Same fix mirrored on the ring card: width:100% + height:100%
+       instead of a fixed 135px box, so it fills its column exactly
+       and matches the verdict card's box exactly — same width, same
+       (stretched, equal) height, same alignment, content never
+       clipped. */
+    .fnd-ring-card {
+        flex: 1 1 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        height: 100% !important;
+        min-height: 135px !important;
         flex-direction: column;
         align-items: center;
+        justify-content: center;
         text-align: center;
         gap: 0.35rem;
-        padding: 0.85rem 0.6rem;
+        padding: 0.6rem 0.6rem;
     }
-    .st-key-results_top_row .fnd-ring-wrap {
-        width: 68px !important;
-        height: 68px !important;
+    .fnd-ring-wrap {
+        width: 64px !important;
+        height: 64px !important;
         margin: 0 auto;
     }
-    .st-key-results_top_row .fnd-ring-card > div:last-child {
+    .fnd-ring-card > div:last-child {
         font-size: 0.7rem !important;
         text-align: center;
         width: 100%;
     }
 
-    /* --- Fix 6: home page Clear / Check Now row stacking on mobile ---
-       Same root cause as Fix 1 and Fix 5: st.columns() auto-stacks
-       below 640px by Streamlit's own default responsive behavior,
-       which was dropping "Check Now →" onto its own line below a
-       full-width "Clear" button. app.py wraps this specific columns
-       row in st.container(key="home_action_row") so we can target
-       ONLY this row. The desktop version uses a wide spacer column to
-       push both buttons to the right edge — on a phone there's no
-       room to spare for a spacer, so it's hidden entirely and Clear /
-       Check Now instead split the full row 50/50, Clear on the left
-       and Check Now on the right. */
     .st-key-home_action_row [data-testid="stHorizontalBlock"] {
         flex-wrap: nowrap !important;
         flex-direction: row !important;
