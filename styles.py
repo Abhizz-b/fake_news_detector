@@ -1211,9 +1211,9 @@ a.fnd-source-link:hover {
         min-height: 210px;
     }
     .st-key-results_top_row .fnd-verdict-icon {
-        width: 38px;
-        height: 38px;
-        font-size: 1.05rem;
+        width: 48px;
+        height: 48px;
+        font-size: 1.35rem;
     }
     .st-key-results_top_row .fnd-verdict-text {
         font-size: 1.15rem;
