@@ -122,6 +122,80 @@ class FactChecker:
 
         return "en"
 
+    # =======================================================================
+    # URL HANDLING
+    # -----------------------------------------------------------------------
+    # FIX: the "🔗 Paste a URL" quick-action pill on the home page implies
+    # users can paste a bare link and have it fact-checked. But previously,
+    # extract_claim() just handed the raw URL *string* to the LLM as "the
+    # text to extract a claim from". The model can't browse, so it had
+    # nothing real to work with - it would hallucinate a meta-claim about
+    # the URL itself (e.g. "this link lacks a specific claim that can be
+    # verified"), and the app would then fact-check THAT instead of any
+    # actual news content. Symptom seen: pasting a homepage/article URL
+    # returned a verdict about "insufficient link text", evaluated against
+    # random unrelated search results.
+    #
+    # Fix: detect when the input is a bare URL, fetch the page's HTML
+    # ourselves, and extract its title + visible text so the LLM has real
+    # article content to read - the same as if the user had copy-pasted
+    # the headline/article text directly.
+    # =======================================================================
+
+    def _is_url(self, text: str) -> bool:
+        """True if the entire input is just a single http(s) URL (as
+        opposed to a headline/claim/article that happens to mention or
+        end with a link)."""
+        return bool(re.match(r"^\s*https?://\S+\s*$", text or ""))
+
+    def _fetch_url_content(self, url: str, max_chars: int = 4000) -> str:
+        """Fetch a URL and extract its page title + readable text, so the
+        claim-extraction step has actual article content instead of a
+        bare link string. Returns an empty string if the page couldn't be
+        fetched or parsed (dead link, blocks bots, not HTML, etc.) - the
+        caller is responsible for handling that case."""
+        try:
+            headers = {
+                "User-Agent": (
+                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                    "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36"
+                )
+            }
+            response = requests.get(url.strip(), headers=headers, timeout=10)
+            response.raise_for_status()
+
+            content_type = response.headers.get("Content-Type", "")
+            if "html" not in content_type.lower() and content_type:
+                return ""
+
+            html = response.text
+
+            title_match = re.search(
+                r"<title[^>]*>(.*?)</title>", html, re.IGNORECASE | re.DOTALL
+            )
+            title = ""
+            if title_match:
+                title = re.sub(r"\s+", " ", title_match.group(1)).strip()
+
+            # Drop script/style blocks entirely - their text isn't article
+            # content and would just add noise (or JS code) to the claim.
+            cleaned_html = re.sub(
+                r"<(script|style|noscript)[^>]*>.*?</\1>",
+                " ",
+                html,
+                flags=re.IGNORECASE | re.DOTALL,
+            )
+            # Strip all remaining HTML tags
+            text = re.sub(r"<[^>]+>", " ", cleaned_html)
+            # Collapse repeated whitespace/newlines from the markup
+            text = re.sub(r"\s+", " ", text).strip()
+
+            combined = f"{title}. {text}" if title else text
+            return combined[:max_chars]
+
+        except Exception:
+            return ""
+
     def _get_language_prompts(self, target_lang: str) -> dict:
         """
         Get localized prompts for the specified language.
@@ -344,6 +418,27 @@ class FactChecker:
         Returns:
             extracted claim
         """
+        # FIX: if the user pasted a bare URL (e.g. via the "Paste a URL"
+        # quick-action), fetch the actual page content first instead of
+        # handing the LLM a raw link string it can't do anything useful
+        # with. See the URL HANDLING section above for the full story.
+        if self._is_url(text):
+            page_text = self._fetch_url_content(text)
+            if page_text:
+                text = page_text
+            else:
+                # Couldn't fetch/parse the page (bot-blocked, dead link,
+                # non-HTML content, homepage with no article, etc). Tell
+                # the user plainly rather than letting the LLM invent a
+                # claim about the URL string itself.
+                return (
+                    "Could not extract article content from this URL. The "
+                    "site may block automated requests, the link may not "
+                    "point to a specific article, or it may not be "
+                    "reachable. Please paste the headline or article text "
+                    "directly instead."
+                )
+
         # English-only project: always use English prompts regardless of
         # input text language or output_language setting.
         prompts = self._get_language_prompts("en")

@@ -713,6 +713,18 @@ def run_fact_check(user_input: str, hero_placeholder):
         search_config=search_config,
     )
     claim = fact_checker.extract_claim(user_input)
+
+    # FIX: if the input was a bare URL that fact_checker couldn't
+    # fetch/parse (bot-blocked, dead link, homepage with no single
+    # article, etc.), extract_claim() returns a plain explanatory
+    # message rather than a real claim. Stop here and show it as a
+    # warning instead of continuing to search/evaluate that message
+    # text as if it were the actual claim.
+    if claim.startswith("Could not extract article content from this URL"):
+        _render_hero(hero_placeholder)
+        st.warning(claim)
+        return
+
     if "claim:" in claim.lower():
         claim = claim.split("claim:")[-1].strip()
 
