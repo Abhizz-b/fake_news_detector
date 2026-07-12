@@ -814,6 +814,87 @@ a.fnd-source-link:hover {
     to { opacity: 1; transform: scale(1); }
 }
 
+/* ===========================================================
+   NEW: Large monitor breakpoint (1400px and wider)
+   ===========================================================
+   Only .st-key-home_center_wrap's max-width changes here — every
+   other rule (cards, buttons, spacing) is left completely alone, so
+   nothing about the *look* of individual elements changes, only how
+   much total width the centered home-page content is allowed to use.
+   This makes big external monitors feel less "an island in a sea of
+   empty space" without ever going edge-to-edge (which would make
+   the hero text/paragraph uncomfortably wide to read). 1180px (the
+   original) still applies on anything narrower than 1400px, i.e.
+   every normal laptop screen is completely unaffected. */
+@media (min-width: 1400px) {
+    .st-key-home_center_wrap {
+        max-width: 1400px;
+    }
+}
+
+/* ===========================================================
+   NEW: Tablet breakpoint (641px – 1024px)
+   ===========================================================
+   Previously there was a big gap between the mobile fixes below
+   (<=640px) and the desktop-oriented default styles above — so an
+   iPad-ish/tablet-width screen (and some small laptops) got the full
+   desktop hero font-size/padding with none of the mobile
+   space-saving tweaks, and none of the width-safety tweaks either.
+   This section only trims font sizes and horizontal padding a bit
+   (nothing structural, no layout/flex-direction changes) so text and
+   spacing feel proportional at these in-between widths, while still
+   keeping the same side-by-side layouts (pills row, verdict +
+   confidence ring, Clear/Check Now row) that desktop uses — those
+   already fit fine at 641px+, they just don't need full desktop-size
+   text and padding. */
+@media (min-width: 641px) and (max-width: 1024px) {
+    /* FIX: on tablet-height screens (e.g. iPad, 768x1024) the home
+       page's content (heading + textarea + pills + buttons + note) is
+       shorter than the viewport, so it all sat pinned to the top with
+       a large empty gap below it. min-height + justify-content:center
+       vertically centers that content in the available viewport space
+       instead, splitting the empty space evenly above/below rather
+       than dumping all of it at the bottom. Scoped to ONLY this
+       min-width:641px/max-width:1024px breakpoint, so phones (<=640px)
+       and laptops/monitors (>1024px) are completely unaffected — this
+       rule simply doesn't exist outside this range. `100px` is a rough
+       allowance for the top header bar above .st-key-home_center_wrap;
+       if content is ever taller than the viewport it just scrolls
+       normally, nothing gets clipped. */
+    .st-key-home_center_wrap {
+        min-height: calc(100vh - 100px);
+        justify-content: center;
+    }
+    .st-key-home_center_wrap {
+        padding: 0.4rem 1.1rem 1rem;
+    }
+    .fnd-hero-minimal h1 {
+        font-size: 2.15rem;
+    }
+    .fnd-hero-minimal p {
+        font-size: 0.9rem;
+        max-width: 90%;
+    }
+    .fnd-static-pill {
+        font-size: 0.78rem;
+        padding: 0.65rem 0.6rem;
+    }
+    .fnd-card {
+        padding: 1.1rem 1.2rem;
+    }
+    .fnd-verdict-card {
+        padding: 1.2rem 1.3rem;
+    }
+    .fnd-verdict-text {
+        font-size: 1.3rem;
+    }
+    .fnd-history-header,
+    .fnd-history-row {
+        grid-template-columns: 2.4fr 0.9fr 1fr 0.7fr 1.2fr;
+        font-size: 0.82rem;
+    }
+}
+
 @media (max-width: 640px) {
 
     .st-key-app_header_bar [data-testid="stHorizontalBlock"] {
