@@ -895,6 +895,30 @@ a.fnd-source-link:hover {
     }
 }
 
+/* ===========================================================
+   NEW: Landscape tablets (e.g. iPad Pro landscape, ~1366x1024)
+   ===========================================================
+   The portrait-tablet breakpoint above only covers up to
+   max-width:1024px, but a tablet rotated to landscape reports a
+   WIDER viewport (e.g. 1366px) that falls outside that range and
+   into "normal desktop" territory instead — so it never got the
+   vertical-centering fix. The problem: a common laptop resolution is
+   ALSO 1366px wide (at ~768px tall), and that combination should NOT
+   be centered (laptops already look fine top-aligned, per earlier
+   testing). The fix distinguishes the two using height, not just
+   width: landscape tablets are relatively tall for their width
+   (~1024px tall), while 1366-wide laptops are comparatively short
+   (~768px tall). Requiring min-height:900px alongside the width range
+   means this rule only ever fires for that taller landscape-tablet
+   shape, leaving every normal 1366x768-ish laptop screen completely
+   untouched. */
+@media (min-width: 1025px) and (max-width: 1400px) and (min-height: 900px) {
+    .st-key-home_center_wrap {
+        min-height: calc(100vh - 100px);
+        justify-content: center;
+    }
+}
+
 @media (max-width: 640px) {
 
     .st-key-app_header_bar [data-testid="stHorizontalBlock"] {
