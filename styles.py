@@ -1111,16 +1111,24 @@ a.fnd-source-link:hover {
         font-size: 1.05rem;
     }
 
-    /* --- Fix 2: home page quick-action pills wrapping unevenly ---
-       Three pills squeezed into one row on a phone forces "Try a
-       headline" / "Paste a URL" / "Check a viral claim" to each wrap
-       their text differently, so the row looks jagged. Stacking them
-       full-width, one per line, keeps every label on one line. */
+    /* --- Fix 2: home page quick-action pills ---
+       FIX (v2): these used to stack full-width, one per line, on
+       phones. Now they stay in a single row (matching desktop) but
+       shrunk down — smaller font, tighter padding, smaller icon gap —
+       so all three ("Try a headline" / "Paste a URL" / "Check a viral
+       claim") comfortably fit side-by-side without overlapping. Text
+       is still allowed to wrap to two lines inside a pill if a label
+       is long, rather than overflowing the pill's edge. */
     .fnd-static-pill-row {
-        flex-direction: column;
+        flex-direction: row;
+        gap: 0.35rem;
     }
     .fnd-static-pill {
-        width: 100%;
+        width: auto;
+        font-size: 0.66rem;
+        padding: 0.55rem 0.35rem;
+        line-height: 1.25;
+        white-space: normal;
     }
 
     /* --- Fix 3: long evidence-source URLs overflowing the card ---
@@ -1237,6 +1245,32 @@ a.fnd-source-link:hover {
     }
     .st-key-results_top_row .fnd-ring-card > div:last-child {
         font-size: 0.76rem !important;
+    }
+
+    /* --- Fix 6: home page Clear / Check Now row stacking on mobile ---
+       Same root cause as Fix 1 and Fix 5: st.columns() auto-stacks
+       below 640px by Streamlit's own default responsive behavior,
+       which was dropping "Check Now →" onto its own line below a
+       full-width "Clear" button. app.py now wraps this specific
+       columns row in st.container(key="home_action_row") so we can
+       target ONLY this row. The desktop version uses a wide spacer
+       column to push both buttons to the right edge — on a phone
+       there's no room to spare for a spacer, so it's hidden entirely
+       and Clear / Check Now instead split the full row 50/50,
+       Clear on the left and Check Now on the right. */
+    .st-key-home_action_row [data-testid="stHorizontalBlock"] {
+        flex-wrap: nowrap !important;
+        flex-direction: row !important;
+        gap: 0.6rem !important;
+    }
+    .st-key-home_action_row [data-testid="stColumn"]:first-child {
+        display: none !important;
+    }
+    .st-key-home_action_row [data-testid="stColumn"]:nth-child(2),
+    .st-key-home_action_row [data-testid="stColumn"]:nth-child(3) {
+        width: 50% !important;
+        min-width: 0 !important;
+        flex: 1 1 0 !important;
     }
 }
 </style>

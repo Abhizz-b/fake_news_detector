@@ -643,11 +643,16 @@ def render_home_page():
             # Action row — a wide spacer column pushes Clear + Check Now
             # to the right edge, matching the mockup's flex-end row
             # instead of stretching them full-width across the card.
-            spacer, c1, c2 = st.columns([3, 1, 1.3])
-            with c1:
-                st.button("Clear", use_container_width=True, key="clear_home_btn", on_click=_clear_claim_input)
-            with c2:
-                check_clicked = st.button("Check Now →", type="primary", use_container_width=True, key="check_now_btn")
+            # Wrapped in a keyed container ("home_action_row") so
+            # styles.py can force this specific row to stay side-by-side
+            # (Clear left / Check Now right) on mobile instead of
+            # Streamlit's default column-stacking below 640px.
+            with st.container(key="home_action_row"):
+                spacer, c1, c2 = st.columns([3, 1, 1.3])
+                with c1:
+                    st.button("Clear", use_container_width=True, key="clear_home_btn", on_click=_clear_claim_input)
+                with c2:
+                    check_clicked = st.button("Check Now →", type="primary", use_container_width=True, key="check_now_btn")
 
             final_claim = (claim_input or "").strip()
 
