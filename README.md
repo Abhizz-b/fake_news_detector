@@ -1,6 +1,6 @@
 # AI Fake News Detector
 
-An intelligent news verification system that uses semantic embeddings and large language models to fact check news claims with evidence-backed reasoning.
+An intelligent news verification system that uses semantic embeddings and large language models to fact check news claims with evidence backed reasoning.
 
 [![Python Version](https://img.shields.io/badge/python-3.12+-blue.svg)](https://python.org)
 [![Streamlit](https://img.shields.io/badge/streamlit-1.43+-red.svg)](https://streamlit.io)
