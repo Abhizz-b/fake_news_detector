@@ -784,16 +784,21 @@ def render_results_page():
 
     meta = verdict_meta(result["verdict"])
 
-    left, right = st.columns([1.4, 1], vertical_alignment="center")
-    with left:
-        render_verdict_card(result["verdict"], result["confidence"])
-    with right:
-        render_confidence_ring(
-            result["confidence"],
-            checked_at=result["checked_at"],
-            sources_found=len(result["evidence"]),
-            color=meta["color"],
-        )
+    # FIX (mobile): wrapped in a keyed container ("results_top_row") so
+    # styles.py can target this specific columns row and force it to
+    # stay side-by-side (instead of Streamlit's default stacking) below
+    # the 640px breakpoint, with both cards shrunk to fit two-up.
+    with st.container(key="results_top_row"):
+        left, right = st.columns([1.4, 1], vertical_alignment="center")
+        with left:
+            render_verdict_card(result["verdict"], result["confidence"])
+        with right:
+            render_confidence_ring(
+                result["confidence"],
+                checked_at=result["checked_at"],
+                sources_found=len(result["evidence"]),
+                color=meta["color"],
+            )
 
     st.markdown("<div style='height:0.5rem'></div>", unsafe_allow_html=True)
     render_reasoning_card(result["reasoning"])
@@ -918,16 +923,20 @@ def render_history_detail_page():
     confidence = estimate_confidence(history_item["verdict"], len(evidence))
     meta = verdict_meta(history_item["verdict"])
 
-    left, right = st.columns([1.4, 1], vertical_alignment="center")
-    with left:
-        render_verdict_card(history_item["verdict"], confidence)
-    with right:
-        render_confidence_ring(
-            confidence,
-            checked_at=history_item["created_at"],
-            sources_found=len(evidence),
-            color=meta["color"],
-        )
+    # FIX (mobile): same keyed-container fix as render_results_page() —
+    # keeps the verdict card + confidence ring side-by-side on phones
+    # instead of Streamlit's default column-stacking below 640px.
+    with st.container(key="results_top_row"):
+        left, right = st.columns([1.4, 1], vertical_alignment="center")
+        with left:
+            render_verdict_card(history_item["verdict"], confidence)
+        with right:
+            render_confidence_ring(
+                confidence,
+                checked_at=history_item["created_at"],
+                sources_found=len(evidence),
+                color=meta["color"],
+            )
 
     render_reasoning_card(history_item["reasoning"])
     render_evidence_card(evidence)

@@ -929,17 +929,40 @@ section[data-testid="stSidebar"] .st-key-sidebar_expand_btn button {
     font-size: 0.9rem;
     flex-shrink: 0;
 }
+/* FIX: the text block next to the source icon (name/link + "Web
+   source" tag) had no width constraint of its own, so it could never
+   shrink below its content's natural width — a long unbroken URL
+   would just push past the edge of the card instead of wrapping,
+   which is what caused the 5th/6th source links to visibly overflow
+   past the right edge of the evidence card. `flex: 1` lets this box
+   take the remaining row width (instead of only its content width)
+   and `min-width: 0` is the actual fix that lets a flex child shrink
+   *below* its content's intrinsic width so wrapping can kick in at
+   all — without it, min-width defaults to `auto` and flex items
+   refuse to shrink past their longest unbreakable text. */
+.fnd-source-body {
+    flex: 1;
+    min-width: 0;
+}
 .fnd-source-name { font-weight: 600; font-size: 0.88rem; color: #f0eefc; }
 .fnd-source-tag { color: #8a8aa3; font-size: 0.75rem; }
 /* NEW: clickable evidence source link — was plain unclickable text.
    Styled to look identical to the old plain text (same color/weight)
    so nothing shifts visually, but now underlines on hover and shows
-   a pointer cursor to signal it's actually clickable. */
+   a pointer cursor to signal it's actually clickable.
+   FIX: added word-break/overflow-wrap so a long URL with no natural
+   spaces breaks and wraps onto multiple lines inside the card instead
+   of overflowing past its right edge (same overflow bug as above,
+   this is the other half of the fix — the container can now shrink,
+   and the text itself can now break to fill that shrunk container). */
 a.fnd-source-link {
     display: inline-block;
+    max-width: 100%;
     text-decoration: none;
     color: #f0eefc;
     cursor: pointer;
+    word-break: break-all;
+    overflow-wrap: anywhere;
 }
 a.fnd-source-link:hover {
     color: #c4b5fd;
@@ -1032,6 +1055,189 @@ a.fnd-source-link:hover {
 @keyframes fndScaleIn {
     from { opacity: 0; transform: scale(0.85); }
     to { opacity: 1; transform: scale(1); }
+}
+
+/* =========================================================================
+   MOBILE RESPONSIVENESS
+   Everything above this point was designed/tested on a laptop-width
+   viewport. These overrides kick in only under 640px (phones) and fix
+   five things that broke there: the top navbar wrapping the avatar
+   below the wordmark, the home-page quick-action pills wrapping text
+   unevenly, long evidence-source URLs overflowing their card, the
+   history table's 5-column grid getting crushed into an unreadable
+   single line, and the results-page verdict card + confidence ring
+   stacking on top of each other instead of sitting side-by-side.
+   Nothing above is touched for desktop/tablet — these rules only
+   apply below the 640px breakpoint.
+   ========================================================================= */
+@media (max-width: 640px) {
+
+    /* --- Fix 1: navbar avatar dropping below the wordmark ---
+       Streamlit auto-stacks st.columns() into a vertical layout once
+       the viewport gets narrow (its own built-in responsive behavior),
+       which is exactly what was pushing the avatar down onto its own
+       line under "Fake News Detector". We only want that default
+       stacking disabled inside OUR header row, so the avatar always
+       stays pinned to the right. */
+    .st-key-app_header_bar [data-testid="stHorizontalBlock"] {
+        flex-wrap: nowrap !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        gap: 0.5rem !important;
+    }
+    .st-key-app_header_bar [data-testid="stColumn"] {
+        width: auto !important;
+        min-width: 0 !important;
+    }
+    .st-key-app_header_bar [data-testid="stColumn"]:first-child {
+        flex: 1 1 auto !important;
+        min-width: 0 !important;
+    }
+    .st-key-app_header_bar [data-testid="stColumn"]:last-child {
+        flex: 0 0 auto !important;
+    }
+    /* wordmark truncates with an ellipsis instead of wrapping or
+       pushing the avatar out of the row on very narrow phones */
+    .fnd-header-brand {
+        min-width: 0;
+    }
+    .fnd-brand-wordmark {
+        display: inline-block;
+        max-width: 46vw;
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+        vertical-align: middle;
+        font-size: 1.05rem;
+    }
+
+    /* --- Fix 2: home page quick-action pills wrapping unevenly ---
+       Three pills squeezed into one row on a phone forces "Try a
+       headline" / "Paste a URL" / "Check a viral claim" to each wrap
+       their text differently, so the row looks jagged. Stacking them
+       full-width, one per line, keeps every label on one line. */
+    .fnd-static-pill-row {
+        flex-direction: column;
+    }
+    .fnd-static-pill {
+        width: 100%;
+    }
+
+    /* --- Fix 3: long evidence-source URLs overflowing the card ---
+       handled mainly via .fnd-source-body / a.fnd-source-link above
+       (flex-shrink + word-break), those rules already apply at every
+       width. Here we just tighten the row's own gap/padding a bit so
+       there's more room for the (now-wrapping) link text on a narrow
+       screen. */
+    .fnd-source-row {
+        gap: 0.5rem;
+        align-items: flex-start;
+    }
+
+    /* --- Fix 4: history table crushed into one unreadable row ---
+       The 5-column grid (Claim / Verdict / Confidence / Sources /
+       Checked At) has no room to breathe at phone widths — columns
+       overlap and the date/time wraps mid-number. Below 640px we drop
+       the grid entirely: the column header row is hidden (it no
+       longer matches anything visually), and each history row
+       becomes a simple stacked list, one field per line, with a small
+       uppercase label (from the `data-label` attribute set in
+       components.py) standing in for the column header that's now
+       gone. */
+    .fnd-history-header {
+        display: none;
+    }
+    .fnd-history-row {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.55rem;
+        padding: 0.9rem 1rem;
+    }
+    .fnd-history-row > div {
+        width: 100%;
+    }
+    .fnd-history-row > div::before {
+        content: attr(data-label);
+        display: block;
+        color: #8a8aa3;
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        margin-bottom: 0.2rem;
+    }
+
+    /* --- Fix 5: results-page verdict card + confidence ring
+       stacking instead of sitting side-by-side ---
+       Same root cause as Fix 1: st.columns() auto-stacks below 640px
+       by Streamlit's own default responsive behavior. app.py now
+       wraps this specific columns row in st.container(key=
+       "results_top_row") so we can target ONLY this row (not every
+       columns row in the app) and force it to stay a 2-up row, with
+       both cards shrunk down (smaller icon/rings/text, tighter
+       padding, content stacked vertically inside each card) so two
+       of them still comfortably fit side-by-side on a phone screen. */
+    .st-key-results_top_row [data-testid="stHorizontalBlock"] {
+        flex-wrap: nowrap !important;
+        flex-direction: row !important;
+        align-items: stretch !important;
+        gap: 0.5rem !important;
+    }
+    .st-key-results_top_row [data-testid="stColumn"] {
+        width: 50% !important;
+        min-width: 0 !important;
+        flex: 1 1 0 !important;
+    }
+
+    /* Shrink the verdict card to fit half-width: icon sits above the
+       label/value instead of beside it, and everything gets denser
+       padding + smaller type.
+       FIX: `height: 100%` here relied on the percentage propagating
+       all the way up through Streamlit's nested column wrapper divs
+       (stColumn > element-container > stVerticalBlock > ...) — since
+       none of those ancestors have an explicit height themselves, a
+       percentage height on the card resolves to nothing and the card
+       just shrinks to fit its own (shorter) content instead, which is
+       why the verdict card rendered visibly shorter than the ring
+       card. A shared, explicit `min-height` on both cards sidesteps
+       that chain entirely: whichever card has less content just gets
+       empty bottom space, but both boxes are always the same height. */
+    .st-key-results_top_row .fnd-verdict-card {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+        padding: 0.9rem 0.85rem;
+        min-height: 210px;
+    }
+    .st-key-results_top_row .fnd-verdict-icon {
+        width: 38px;
+        height: 38px;
+        font-size: 1.05rem;
+    }
+    .st-key-results_top_row .fnd-verdict-text {
+        font-size: 1.15rem;
+    }
+
+    /* Shrink the confidence-ring card to match: ring sits above the
+       "Checked At" / "Sources Found" text instead of beside it, ring
+       itself is scaled down, and it shares the SAME min-height as the
+       verdict card above so both boxes always render identically
+       tall regardless of content length. */
+    .st-key-results_top_row .fnd-ring-card {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+        padding: 0.9rem 0.85rem;
+        min-height: 210px;
+    }
+    .st-key-results_top_row .fnd-ring-wrap {
+        width: 84px !important;
+        height: 84px !important;
+    }
+    .st-key-results_top_row .fnd-ring-card > div:last-child {
+        font-size: 0.76rem !important;
+    }
 }
 </style>
 """
