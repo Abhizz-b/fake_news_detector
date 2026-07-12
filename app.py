@@ -622,12 +622,22 @@ def render_home_page():
             # extra rerun/key-juggling, these are now plain static pills:
             # no st.button, no click handler, no hover glow — just a
             # decorative row of labels, so there's nothing left to throw.
+            # FIX: on phones, the full labels ("Try a headline", "Check
+            # a viral claim") don't fit in a single line at any width
+            # small enough to keep three pills side-by-side, so they
+            # kept wrapping into lopsided two-line splits no matter how
+            # the wrap point was tuned. Each pill now carries BOTH a
+            # full label (.fnd-pill-full, shown on desktop) and a short
+            # one-word/two-word label (.fnd-pill-short, shown on mobile
+            # instead via a CSS display swap in styles.py) — so phones
+            # get a short label that comfortably fits on one line, and
+            # desktop is completely unchanged.
             st.markdown(
                 """
                 <div class="fnd-static-pill-row">
-                    <div class="fnd-static-pill">📰&nbsp;&nbsp;Try a headline</div>
-                    <div class="fnd-static-pill">🔗&nbsp;&nbsp;Paste a URL</div>
-                    <div class="fnd-static-pill">🌐&nbsp;&nbsp;Check a viral claim</div>
+                    <div class="fnd-static-pill">📰&nbsp;&nbsp;<span class="fnd-pill-full">Try a headline</span><span class="fnd-pill-short">Headline</span></div>
+                    <div class="fnd-static-pill">🔗&nbsp;&nbsp;<span class="fnd-pill-full">Paste a URL</span><span class="fnd-pill-short">URL</span></div>
+                    <div class="fnd-static-pill">🌐&nbsp;&nbsp;<span class="fnd-pill-full">Check a viral claim</span><span class="fnd-pill-short">Viral claim</span></div>
                 </div>
                 """,
                 unsafe_allow_html=True,

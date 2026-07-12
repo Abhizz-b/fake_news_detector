@@ -655,6 +655,10 @@ section[data-testid="stSidebar"] .st-key-sidebar_expand_btn button {
     cursor: default;
     user-select: none;
 }
+/* Desktop/tablet default: show the full label, hide the short one.
+   The mobile media query below flips this. */
+.fnd-pill-full { display: inline; }
+.fnd-pill-short { display: none; }
 
 /* Minimal home page: the single claim/article box (headline or full
    article — same field), with a soft purple glow border */
@@ -1123,12 +1127,30 @@ a.fnd-source-link:hover {
         flex-direction: row;
         gap: 0.35rem;
     }
+    /* --- Fix 2: home page quick-action pills ---
+       FIX (v3): full labels physically can't fit on one line at
+       phone widths no matter the wrap point, which is what kept
+       producing lopsided two-line splits ("Try a" / "headline").
+       Below 640px we now show the short label instead (see the
+       .fnd-pill-full / .fnd-pill-short spans added in app.py) and
+       keep everything on a single line — no wrapping needed at all,
+       so every pill renders at the same clean single-line height. */
+    .fnd-pill-full { display: none; }
+    .fnd-pill-short { display: inline; }
+    .fnd-static-pill-row {
+        flex-direction: row;
+        gap: 0.35rem;
+    }
     .fnd-static-pill {
         width: auto;
-        font-size: 0.66rem;
-        padding: 0.55rem 0.35rem;
-        line-height: 1.25;
-        white-space: normal;
+        font-size: 0.7rem;
+        padding: 0.6rem 0.3rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
 
     /* --- Fix 3: long evidence-source URLs overflowing the card ---
