@@ -553,7 +553,7 @@ def _inject_auth_css():
         }
         .auth-title {
             color: #fff;
-            font-size: 1.45rem;
+            font-size: 1.65rem;
             font-weight: 700;
             margin: 0;
         }
@@ -572,13 +572,13 @@ def _inject_auth_css():
             font-weight: 700;
             letter-spacing: -0.01em;
             line-height: 1.3;
-            margin: 0.15rem 0 0.3rem 0;
+            margin: 0.15rem 0 0.45rem 0;
         }
         .auth-card-subtitle {
             color: var(--auth-text-dim);
-            font-size: 0.78rem;
+            font-size: 0.72rem;
             line-height: 1.4;
-            margin: 0 0 1.75rem 0;
+            margin: 0 0 1.1rem 0;
         }
 
         /* ---------- divider ---------- */
@@ -626,17 +626,17 @@ def _inject_auth_css():
                 padding-bottom: 1rem;
             }
             [data-testid="stVerticalBlock"] {
-                gap: 0.6rem !important;
+                gap: 0.4rem !important;
             }
             .auth-header { margin-bottom: 0.6rem; }
             .auth-icon-badge { width: 46px; height: 46px; margin-bottom: 0.4rem; }
             .auth-icon-badge svg { width: 22px; height: 22px; }
-            .auth-title { font-size: 1.2rem; }
+            .auth-title { font-size: 1.35rem; }
             .auth-subtitle { font-size: 0.78rem; }
-            .auth-card-title { font-size: 1.15rem; margin-bottom: 0.25rem; }
-            .auth-card-subtitle { font-size: 0.75rem; margin-bottom: 1.5rem; }
+            .auth-card-title { font-size: 1.15rem; margin-bottom: 0.4rem; }
+            .auth-card-subtitle { font-size: 0.68rem; margin-bottom: 0.9rem; }
             .auth-divider { margin: 0.35rem 0; }
-            .auth-footer { margin-top: 0.6rem; font-size: 0.68rem; }
+            .auth-footer { margin-top: 0.6rem; font-size: 0.72rem; }
             div[data-testid="stTextInput"] input { height: 2.6rem !important; }
             div[data-testid="stFormSubmitButton"] button { height: 2.6rem !important; }
             /* Width/centering come from st.columns + use_container_width
@@ -793,7 +793,7 @@ def show_login_form():
     # matching the installed Streamlit version's actual DOM. The
     # middle column is guaranteed centered because the two side
     # columns are equal width - no CSS guesswork involved at all.
-    _, mid, _ = st.columns([1, 2, 1])
+    _, mid, _ = st.columns([1.04, 1.92, 1.04])
     with mid:
         if st.button("Register a new account", use_container_width=True):
             st.session_state.auth_page = 'register'
@@ -834,7 +834,7 @@ def show_register_form():
 
     # Same column-based centering as the login page - see comment
     # there for why this replaces the old CSS-only approach.
-    _, mid, _ = st.columns([1, 2, 1])
+    _, mid, _ = st.columns([1.04, 1.92, 1.04])
     with mid:
         if st.button("Back to login", use_container_width=True):
             st.session_state.auth_page = 'login'
