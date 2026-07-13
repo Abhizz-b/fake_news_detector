@@ -54,3 +54,4 @@ data/*
 !data/user_configs/.gitkeep
 # ignore specific config files
 data/user_configs/*.json
+data/sessions.db
