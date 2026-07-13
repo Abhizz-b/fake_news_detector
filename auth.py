@@ -563,19 +563,22 @@ def _inject_auth_css():
             margin-top: 0.25rem;
         }
 
-        /* ---------- card title/subtitle (sit directly above the
-           native st.form, which already has its own bordered card -
-           no extra wrapping div needed/used here anymore) ---------- */
+        /* ---------- card title/subtitle (now the first thing inside
+           the native st.form, sharing its bordered card with the
+           inputs) ---------- */
         .auth-card-title {
             color: #fff;
-            font-size: 1.1rem;
+            font-size: 1.35rem;
             font-weight: 700;
-            margin-bottom: 0.1rem;
+            letter-spacing: -0.01em;
+            line-height: 1.3;
+            margin: 0.15rem 0 0.3rem 0;
         }
         .auth-card-subtitle {
             color: var(--auth-text-dim);
-            font-size: 0.82rem;
-            margin-bottom: 0.75rem;
+            font-size: 0.78rem;
+            line-height: 1.4;
+            margin: 0 0 1.75rem 0;
         }
 
         /* ---------- divider ---------- */
@@ -623,16 +626,17 @@ def _inject_auth_css():
                 padding-bottom: 1rem;
             }
             [data-testid="stVerticalBlock"] {
-                gap: 0.4rem !important;
+                gap: 0.6rem !important;
             }
             .auth-header { margin-bottom: 0.6rem; }
             .auth-icon-badge { width: 46px; height: 46px; margin-bottom: 0.4rem; }
             .auth-icon-badge svg { width: 22px; height: 22px; }
             .auth-title { font-size: 1.2rem; }
             .auth-subtitle { font-size: 0.78rem; }
-            .auth-card-title { font-size: 1rem; }
+            .auth-card-title { font-size: 1.15rem; margin-bottom: 0.25rem; }
+            .auth-card-subtitle { font-size: 0.75rem; margin-bottom: 1.5rem; }
             .auth-divider { margin: 0.35rem 0; }
-            .auth-footer { margin-top: 0.6rem; font-size: 0.72rem; }
+            .auth-footer { margin-top: 0.6rem; font-size: 0.68rem; }
             div[data-testid="stTextInput"] input { height: 2.6rem !important; }
             div[data-testid="stFormSubmitButton"] button { height: 2.6rem !important; }
             /* Width/centering come from st.columns + use_container_width
@@ -680,12 +684,9 @@ def _auth_header():
 
 
 def _auth_footer():
-    st.markdown(
-        """
-        <p class="auth-footer">🛡️ Detect. Verify. Trust.</p>
-        """,
-        unsafe_allow_html=True,
-    )
+    """No longer called from either form - kept as a no-op stub in case
+    something elsewhere still references it, so nothing breaks."""
+    pass
 
 
 def _tag_field_icons():
@@ -763,12 +764,14 @@ def show_login_form():
     # fragment, so the browser auto-closed the unclosed <div> right
     # there - it never actually wrapped the title/subtitle/form below
     # it, and just rendered as an empty bordered box. Removed; the
-    # native st.form() below already renders its own bordered card,
-    # so no wrapper div is needed at all.
-    st.markdown('<p class="auth-card-title">Welcome back</p>', unsafe_allow_html=True)
-    st.markdown('<p class="auth-card-subtitle">Login to continue</p>', unsafe_allow_html=True)
-
+    # native st.form() below already renders its own bordered card, so
+    # the title/subtitle are placed AS THE FIRST THING INSIDE that
+    # form, making them visually part of the same bordered box as the
+    # inputs (previously they sat above the box, outside its border).
     with st.form("login_form"):
+        st.markdown('<p class="auth-card-title">Welcome back</p>', unsafe_allow_html=True)
+        st.markdown('<p class="auth-card-subtitle">Login to continue</p>', unsafe_allow_html=True)
+
         username = st.text_input("Username", placeholder="Enter your username")
         password = st.text_input("Password", type="password", placeholder="Enter your password")
         remember = st.checkbox("Remember me on this browser", value=True)
@@ -796,7 +799,6 @@ def show_login_form():
             st.session_state.auth_page = 'register'
             st.rerun()
 
-    _auth_footer()
     _tag_field_icons()
 
 
@@ -806,12 +808,13 @@ def show_register_form():
     """
     _auth_header()
 
-    # Same fix as show_login_form(): no more empty '<div class="auth-card">'
-    # wrapper - see note above.
-    st.markdown('<p class="auth-card-title">Create an account</p>', unsafe_allow_html=True)
-    st.markdown('<p class="auth-card-subtitle">Register to get started</p>', unsafe_allow_html=True)
-
+    # Same reasoning as show_login_form(): title/subtitle now render
+    # as the first thing INSIDE st.form, so they sit inside the same
+    # bordered card as the inputs instead of above it.
     with st.form("register_form"):
+        st.markdown('<p class="auth-card-title">Create an account</p>', unsafe_allow_html=True)
+        st.markdown('<p class="auth-card-subtitle">Register to get started</p>', unsafe_allow_html=True)
+
         username = st.text_input("Username", placeholder="Choose a username")
         password = st.text_input("Password", type="password", placeholder="Choose a password")
         confirm_password = st.text_input("Confirm password", type="password", placeholder="Re-enter your password")
@@ -837,7 +840,6 @@ def show_register_form():
             st.session_state.auth_page = 'login'
             st.rerun()
 
-    _auth_footer()
     _tag_field_icons()
 
 
