@@ -448,6 +448,13 @@ class OpenAIEmbeddingClient:
         except Exception as e:
             raise Exception(f"OpenAI embedding error: {e}")
 
-
 # Global model manager instance
-model_manager = ModelManager()
+print("MODEL_MANAGER: starting instantiation...", flush=True)
+try:
+    model_manager = ModelManager()
+    print("MODEL_MANAGER: instance created successfully", flush=True)
+except Exception:
+    import traceback
+    print("MODEL_MANAGER: FAILED with exception below:", flush=True)
+    traceback.print_exc()
+    raise

@@ -639,6 +639,35 @@ SAMPLE_URL = "https://example-news-site.com/breaking-story"
 SAMPLE_VIRAL_CLAIM = "Drinking bleach cures COVID-19"
 
 
+# ===========================================================================
+# MOBILE FIX: the hero tagline ("Paste any news, headline, or claim — our
+# AI cross-checks it against live web sources and tells you what's real.")
+# and the bottom disclaimer note both wrap onto 3-4 lines on phone-width
+# screens, eating a lot of vertical space above the fold. Desktop has
+# plenty of room and should stay exactly as-is.
+#
+# Fix: each of these two spots now renders BOTH a full version (desktop)
+# and a short version (mobile), using the same full/short CSS-swap
+# pattern already used for the quick-action pills above. A single
+# <style> block (injected once, near the top of render_home_page) shows
+# the "full" span and hides the "short" span by default, then flips that
+# at <=640px via @media so phones get the short copy instead. Nothing
+# about the desktop layout changes.
+# ===========================================================================
+
+_MOBILE_SHORT_TEXT_CSS = """
+<style>
+.fnd-tagline-full, .fnd-disclaimer-full { display: inline; }
+.fnd-tagline-short, .fnd-disclaimer-short { display: none; }
+
+@media (max-width: 640px) {
+    .fnd-tagline-full, .fnd-disclaimer-full { display: none; }
+    .fnd-tagline-short, .fnd-disclaimer-short { display: inline; }
+}
+</style>
+"""
+
+
 def _clear_claim_input():
     """FIX: setting st.session_state.claim_input_box directly inside the
     button's if-block (after st.text_area(key="claim_input_box") has
@@ -660,10 +689,18 @@ def _render_hero(placeholder, status_text: str = None):
     appearing below the button.
     """
     if status_text is None:
+        # MOBILE FIX: full tagline shown on desktop, a shorter one-line
+        # version shown on phones (swapped via the CSS injected in
+        # render_home_page). Wording/meaning unchanged, just shorter.
         body_html = (
             '<p class="fnd-hero-tagline">'
-            "Paste any news, headline, or claim — our AI cross-checks it "
+            '<span class="fnd-tagline-full">'
+            "Paste any news, headline, or claim our AI cross-checks it "
             "against live web sources and tells you what's real."
+            "</span>"
+            '<span class="fnd-tagline-short">'
+            "Paste a claim AI checks it against live sources."
+            "</span>"
             "</p>"
         )
     else:
@@ -686,6 +723,10 @@ def _render_hero(placeholder, status_text: str = None):
 
 
 def render_home_page():
+    # MOBILE FIX: inject the full/short CSS-swap rules once, before any
+    # of the text that depends on them is rendered.
+    st.markdown(_MOBILE_SHORT_TEXT_CSS, unsafe_allow_html=True)
+
     with st.container(key="home_center_wrap"):
         hero_placeholder = st.empty()
         _render_hero(hero_placeholder)
@@ -761,9 +802,36 @@ def render_home_page():
         # FIX: was a 1rem spacer before the disclaimer note — trimmed to
         # 0.5rem as part of the overall vertical tightening.
         st.markdown("<div style='height:0.5rem'></div>", unsafe_allow_html=True)
-        st.info(
-            "This is a student project demo using free-tier AI models. "
-            "Please verify important claims through official sources."
+
+        # MOBILE FIX: the previous st.info(...) always rendered the full
+        # 2-sentence disclaimer, which wraps to 3-4 lines on phone-width
+        # screens and makes the info box unnecessarily tall. st.info()
+        # itself has no unsafe_allow_html switch, so this is now a plain
+        # st.markdown block styled to look like the same blue info box
+        # (via .fnd-disclaimer-box in styles.py / inline style below),
+        # carrying a full version (desktop) and a short one-liner
+        # (mobile), swapped by the same CSS as the tagline above.
+        st.markdown(
+            """
+            <div class="fnd-disclaimer-box" style="
+                background-color: rgba(28, 62, 106, 0.35);
+                border: 1px solid rgba(59, 130, 246, 0.35);
+                border-radius: 0.5rem;
+                padding: 0.75rem 1rem;
+                color: #8ec8ff;
+                font-size: 0.9rem;
+                line-height: 1.5;
+            ">
+                <span class="fnd-disclaimer-full">
+                    This is a student project demo using free-tier AI models.
+                    Please verify important claims through official sources.
+                </span>
+                <span class="fnd-disclaimer-short">
+                    Student demo (free-tier AI) verify important claims yourself.
+                </span>
+            </div>
+            """,
+            unsafe_allow_html=True,
         )
 
 
