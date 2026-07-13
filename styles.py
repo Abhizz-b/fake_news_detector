@@ -803,9 +803,10 @@ a.fnd-source-link:hover {
    pair read as one matched set of two equal-size buttons. */
 .st-key-download_pdf_results button,
 .st-key-download_pdf_history button {
+    width: 170px !important;
     height: 44px !important;
     border-radius: 10px !important;
-    font-size: 1rem !important;
+    font-size: 0.95rem !important;
     font-weight: 600 !important;
     box-sizing: border-box !important;
 }

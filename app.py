@@ -574,7 +574,7 @@ def render_pdf_view_button(pdf_data: bytes, key: str):
     html = f"""
     <html>
     <body style="margin:0; padding:0; background:transparent; width:100%; height:100%;">
-    <div style="width: 100%; height: 44px; box-sizing: border-box;">
+    <div style="width: 170px; height: 44px; box-sizing: border-box;">
         <button id="view-pdf-btn-{key}" style="
             width: 100%;
             height: 44px;
@@ -584,7 +584,7 @@ def render_pdf_view_button(pdf_data: bytes, key: str):
             border: none;
             padding: 0 1rem;
             border-radius: 10px;
-            font-size: 1rem;
+            font-size: 0.95rem;
             font-weight: 600;
             font-family: inherit;
             cursor: pointer;
@@ -926,7 +926,12 @@ def render_results_page():
         # (Blob URL) so phone users can navigate back to the app
         # normally, instead of the download button handing the file
         # off to a standalone OS PDF viewer with no way back.
-        col_view, col_download = st.columns(2)
+        # SIZE FIX: st.columns(2) split the button pair across the FULL
+        # container width, making each button huge/stretched. A third
+        # spacer column (much wider than the button columns) eats the
+        # leftover space instead, so both buttons stay compact,
+        # equal-sized, and left-aligned.
+        col_view, col_download, _spacer = st.columns([1, 1, 3])
         with col_view:
             render_pdf_view_button(pdf_data, key="results")
         with col_download:
@@ -943,7 +948,6 @@ def render_results_page():
                 file_name=filename,
                 mime="application/pdf",
                 key="download_pdf_results",
-                use_container_width=True,
             )
     except Exception as e:
         st.error(f"PDF generation error: {str(e)}")
@@ -1068,7 +1072,10 @@ def render_history_detail_page():
         # MOBILE FIX: same "View Report" (Blob URL, new tab) addition as
         # render_results_page() above, so this page's export also gets
         # a phone-friendly back-navigable option alongside the download.
-        col_view, col_download = st.columns(2)
+        # SIZE FIX: same compact-columns fix as render_results_page() —
+        # a wide spacer column keeps both buttons small and left-aligned
+        # instead of stretched across the full container width.
+        col_view, col_download, _spacer = st.columns([1, 1, 3])
         with col_view:
             render_pdf_view_button(pdf_data, key="history_detail")
         with col_download:
@@ -1080,7 +1087,6 @@ def render_history_detail_page():
                 file_name=filename,
                 mime="application/pdf",
                 key="download_pdf_history",
-                use_container_width=True,
             )
     except Exception as e:
         st.error(f"PDF generation error: {str(e)}")
