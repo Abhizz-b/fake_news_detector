@@ -699,6 +699,16 @@ section[data-testid="stSidebar"] .st-key-sidebar_expand_btn button {
     align-items: center;
     gap: 1.2rem;
 }
+/* FIX: this card is a .fnd-card, so it was inheriting the generic
+   hover glow (border-color + purple box-shadow) meant for clickable/
+   informational cards elsewhere. It's just a static confidence readout
+   next to the verdict box, not something meant to invite a hover
+   interaction, so the glow is switched off here specifically —
+   nothing else using .fnd-card is affected. */
+.fnd-ring-card:hover {
+    border-color: #23232f;
+    box-shadow: none;
+}
 .fnd-ring-wrap {
     animation: fndScaleIn 0.5s ease-out both;
     filter: drop-shadow(0 4px 10px rgba(0,0,0,0.25));
