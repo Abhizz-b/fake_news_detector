@@ -3,6 +3,7 @@ import os
 from datetime import datetime
 import time
 import base64
+import streamlit.components.v1 as components
 from fact_checker import FactChecker
 import auth
 import db_utils
@@ -537,6 +538,91 @@ def estimate_confidence(verdict: str, evidence_count: int) -> int:
 
 
 # ===========================================================================
+# ---- PDF "VIEW IN BROWSER" HELPER (mobile back-button fix) ----
+#
+# MOBILE FIX: st.download_button saves the PDF to disk. On a phone, that
+# hands the file off to the OS's own PDF viewer app (or a full-screen
+# in-browser viewer that isn't part of the Streamlit tab's history) —
+# there's no "back" that returns to the app, because the app was never
+# navigated away from a browser-history point of view.
+#
+# Fix: build the PDF into a Blob URL client-side and window.open() it in
+# a new tab. Blob URLs (unlike raw data: URIs, which mobile Chrome blocks
+# for top-level navigation — the same restriction that broke the old PDF
+# export link) open as a normal browser tab, so the phone's ordinary
+# back gesture / tab switcher takes the user right back to the app tab.
+# This is additive: st.download_button stays as-is for anyone who wants
+# an actual saved file.
+# ===========================================================================
+
+def render_pdf_view_button(pdf_data: bytes, key: str):
+    """Renders a 'View Report' button (via a small embedded HTML/JS
+    component) that opens the given PDF bytes in a new browser tab
+    using a Blob URL, instead of triggering a file download.
+    """
+    pdf_base64 = base64.b64encode(pdf_data).decode("utf-8")
+    # SIZING FIX: the previous version let the button size itself off its
+    # own padding, so it rendered noticeably bigger/wider than the native
+    # st.download_button next to it (that one has extra inset spacing
+    # baked into Streamlit's own element wrapper, which this custom HTML
+    # button doesn't get "for free" since it lives inside its own
+    # components.html iframe). Pinning html/body to 100% with no margin,
+    # and giving the button a fixed height + box-sizing:border-box that
+    # matches Streamlit's own ~44px button height, makes the two sit at
+    # the same visual size instead of looking like two different button
+    # families stacked side by side.
+    html = f"""
+    <html>
+    <body style="margin:0; padding:0; background:transparent; width:100%; height:100%;">
+    <div style="width: 100%; height: 44px; box-sizing: border-box;">
+        <button id="view-pdf-btn-{key}" style="
+            width: 100%;
+            height: 44px;
+            box-sizing: border-box;
+            background: linear-gradient(90deg, #8b5cf6, #7c3aed);
+            color: #ffffff;
+            border: none;
+            padding: 0 1rem;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+            line-height: 44px;
+        ">View Report</button>
+    </div>
+    <script>
+        (function() {{
+            const btn = document.getElementById("view-pdf-btn-{key}");
+            if (!btn) return;
+            btn.addEventListener("click", function() {{
+                try {{
+                    const b64 = "{pdf_base64}";
+                    const byteChars = atob(b64);
+                    const byteNumbers = new Array(byteChars.length);
+                    for (let i = 0; i < byteChars.length; i++) {{
+                        byteNumbers[i] = byteChars.charCodeAt(i);
+                    }}
+                    const byteArray = new Uint8Array(byteNumbers);
+                    const blob = new Blob([byteArray], {{ type: "application/pdf" }});
+                    const blobUrl = URL.createObjectURL(blob);
+                    const newTab = window.open(blobUrl, "_blank");
+                    if (!newTab) {{
+                        alert("Your browser blocked the new tab. Please allow pop-ups for this site, or use the Download button instead.");
+                    }}
+                }} catch (err) {{
+                    alert("Could not open the PDF preview. Please use the Download button instead.");
+                }}
+            }});
+        }})();
+    </script>
+    </body>
+    </html>
+    """
+    components.html(html, height=44)
+
+
+# ===========================================================================
 # ---- HOME PAGE ----
 # Rebuilt to match the approved HTML mockup exactly:
 #   - hero copy in sentence case ("Think twice." / "Verify everything.")
@@ -835,20 +921,30 @@ def render_results_page():
         pdf_data = generate_fact_check_pdf(history_item_for_pdf)
         current_time = datetime.now().strftime("%Y%m%d_%H%M%S")
         filename = f"fact_check_report_{current_time}.pdf"
-        # FIX: a raw HTML <a href="data:application/pdf;base64,..."> tag
-        # doesn't reliably trigger a download on Streamlit Community
-        # Cloud — deployed apps run inside a sandboxed iframe that blocks
-        # data-URI download clicks, so the click silently no-ops (browser
-        # shows a local file:/// path that was never actually written).
-        # st.download_button is Streamlit's native download mechanism,
-        # built specifically to work inside that sandboxed iframe.
-        st.download_button(
-            label="📄 Export as PDF",
-            data=pdf_data,
-            file_name=filename,
-            mime="application/pdf",
-            key="download_pdf_results",
-        )
+
+        # MOBILE FIX: "View Report" opens the PDF in a new browser tab
+        # (Blob URL) so phone users can navigate back to the app
+        # normally, instead of the download button handing the file
+        # off to a standalone OS PDF viewer with no way back.
+        col_view, col_download = st.columns(2)
+        with col_view:
+            render_pdf_view_button(pdf_data, key="results")
+        with col_download:
+            # FIX: a raw HTML <a href="data:application/pdf;base64,..."> tag
+            # doesn't reliably trigger a download on Streamlit Community
+            # Cloud — deployed apps run inside a sandboxed iframe that blocks
+            # data-URI download clicks, so the click silently no-ops (browser
+            # shows a local file:/// path that was never actually written).
+            # st.download_button is Streamlit's native download mechanism,
+            # built specifically to work inside that sandboxed iframe.
+            st.download_button(
+                label="📄 Download PDF",
+                data=pdf_data,
+                file_name=filename,
+                mime="application/pdf",
+                key="download_pdf_results",
+                use_container_width=True,
+            )
     except Exception as e:
         st.error(f"PDF generation error: {str(e)}")
         st.info("Please make sure the ReportLab library is installed: pip install reportlab")
@@ -968,15 +1064,24 @@ def render_history_detail_page():
         pdf_data = generate_fact_check_pdf(history_item)
         current_time = datetime.now().strftime("%Y%m%d_%H%M%S")
         filename = f"fact_check_report_{current_time}.pdf"
-        # FIX: same iframe/data-URI issue as the results page — use
-        # Streamlit's native download_button instead of a raw HTML anchor.
-        st.download_button(
-            label="📄 Export as PDF",
-            data=pdf_data,
-            file_name=filename,
-            mime="application/pdf",
-            key="download_pdf_history",
-        )
+
+        # MOBILE FIX: same "View Report" (Blob URL, new tab) addition as
+        # render_results_page() above, so this page's export also gets
+        # a phone-friendly back-navigable option alongside the download.
+        col_view, col_download = st.columns(2)
+        with col_view:
+            render_pdf_view_button(pdf_data, key="history_detail")
+        with col_download:
+            # FIX: same iframe/data-URI issue as the results page — use
+            # Streamlit's native download_button instead of a raw HTML anchor.
+            st.download_button(
+                label="📄 Download PDF",
+                data=pdf_data,
+                file_name=filename,
+                mime="application/pdf",
+                key="download_pdf_history",
+                use_container_width=True,
+            )
     except Exception as e:
         st.error(f"PDF generation error: {str(e)}")
         st.info("Please make sure the ReportLab library is installed: pip install reportlab")

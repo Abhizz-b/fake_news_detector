@@ -740,10 +740,37 @@ a.fnd-source-link {
     cursor: pointer;
     word-break: break-all;
     overflow-wrap: anywhere;
+    /* MOBILE FIX (tap not registering, only long-press works): explicitly
+       telling the browser this element is meant for direct
+       tap/manipulation (not a scroll/pan surface) stops some mobile
+       browsers from swallowing the tap as part of Streamlit's own
+       touch/scroll gesture handling on the page. Also forces a visible
+       tap flash so a successful tap is obvious, and guarantees this
+       specific element is never accidentally excluded from the hit-test
+       by an inherited pointer-events value. Padding widens the actual
+       tappable box beyond just the text glyphs (small text is an easy
+       mis-tap target on a phone). */
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: rgba(139, 92, 246, 0.35);
+    -webkit-touch-callout: default;
+    pointer-events: auto;
+    position: relative;
+    z-index: 1;
+    padding: 0.15rem 0;
 }
 a.fnd-source-link:hover {
     color: #c4b5fd;
     text-decoration: underline;
+}
+/* MOBILE FIX (companion rule): the row and its icon/body wrapper must
+   not themselves end up sitting visually "on top of" the link at the
+   exact pixel the finger lands on. Nothing here was styled with a
+   competing absolutely-positioned layer, but pinning these to
+   pointer-events:auto too removes any ambiguity for the browser's
+   touch hit-test across the whole row, not just the anchor itself. */
+.fnd-source-row,
+.fnd-source-body {
+    pointer-events: auto;
 }
 
 .fnd-history-header {
@@ -766,6 +793,21 @@ a.fnd-source-link:hover {
     margin-bottom: 0.5rem;
     font-size: 0.88rem;
     animation: fndFadeUp 0.35s ease-out both;
+}
+
+/* MATCH FIX: st.download_button ("Download PDF") sat next to the
+   custom View Report button (rendered via components.html) but looked
+   noticeably smaller/boxier — Streamlit's own button padding/height
+   defaults don't line up with a plain custom HTML button by default.
+   Forcing the same height, border-radius and font-size here makes the
+   pair read as one matched set of two equal-size buttons. */
+.st-key-download_pdf_results button,
+.st-key-download_pdf_history button {
+    height: 44px !important;
+    border-radius: 10px !important;
+    font-size: 1rem !important;
+    font-weight: 600 !important;
+    box-sizing: border-box !important;
 }
 
 .st-key-back_to_home_btn button {
