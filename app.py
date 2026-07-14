@@ -663,6 +663,16 @@ _MOBILE_SHORT_TEXT_CSS = """
 @media (max-width: 640px) {
     .fnd-tagline-full, .fnd-disclaimer-full { display: none; }
     .fnd-tagline-short, .fnd-disclaimer-short { display: inline; }
+
+    /* On phones the box must be allowed to wrap and stay within the
+       viewport - the desktop nowrap/fit-content rules (set inline on
+       the div) would otherwise force a horizontally-overflowing box
+       on narrow screens. */
+    .fnd-disclaimer-box {
+        white-space: normal !important;
+        width: 100% !important;
+        max-width: 100% !important;
+    }
 }
 </style>
 """
@@ -811,16 +821,28 @@ def render_home_page():
         # (via .fnd-disclaimer-box in styles.py / inline style below),
         # carrying a full version (desktop) and a short one-liner
         # (mobile), swapped by the same CSS as the tagline above.
+        #
+        # SIZE + TRANSPARENCY FIX: box was rendering visually "too big"
+        # (0.75rem/1rem padding + 0.9rem font made it feel like a full
+        # alert banner) and the fill color was a fairly solid blue.
+        # Shrunk the padding and font-size down, and lowered the
+        # background/border alpha so the box reads as a subtle footnote
+        # instead of a loud banner. Text color/copy unchanged.
         st.markdown(
             """
             <div class="fnd-disclaimer-box" style="
-                background-color: rgba(28, 62, 106, 0.35);
-                border: 1px solid rgba(59, 130, 246, 0.35);
-                border-radius: 0.5rem;
-                padding: 0.75rem 1rem;
+                background-color: rgba(28, 62, 106, 0.16);
+                border: 1px solid rgba(59, 130, 246, 0.20);
+                border-radius: 0.6rem;
+                padding: 0.7rem 1.1rem;
                 color: #8ec8ff;
-                font-size: 0.9rem;
-                line-height: 1.5;
+                font-size: 0.8rem;
+                line-height: 1.55;
+                max-width: 100%;
+                width: fit-content;
+                margin: 0 auto;
+                text-align: center;
+                white-space: nowrap;
             ">
                 <span class="fnd-disclaimer-full">
                     This is a student project demo using free-tier AI models.
