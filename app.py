@@ -667,11 +667,18 @@ _MOBILE_SHORT_TEXT_CSS = """
     /* On phones the box must be allowed to wrap and stay within the
        viewport - the desktop nowrap/fit-content rules (set inline on
        the div) would otherwise force a horizontally-overflowing box
-       on narrow screens. */
+       on narrow screens. Also shrink it further and make it more
+       transparent than the desktop version, since the phone screen
+       has much less room to spare. */
     .fnd-disclaimer-box {
-        white-space: normal !important;
-        width: 100% !important;
-        max-width: 100% !important;
+        white-space: nowrap !important;
+        width: fit-content !important;
+        max-width: 92vw !important;
+        background-color: rgba(28, 62, 106, 0.10) !important;
+        border-color: rgba(59, 130, 246, 0.14) !important;
+        padding: 0.4rem 0.6rem !important;
+        font-size: 0.66rem !important;
+        line-height: 1.35 !important;
     }
 }
 </style>
@@ -849,7 +856,7 @@ def render_home_page():
                     Please verify important claims through official sources.
                 </span>
                 <span class="fnd-disclaimer-short">
-                    Student demo (free-tier AI) verify important claims yourself.
+                    Free-tier AI demo — verify claims yourself.
                 </span>
             </div>
             """,
