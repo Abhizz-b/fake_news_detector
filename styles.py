@@ -55,14 +55,49 @@ footer {visibility: hidden;}
 [data-testid="collapsedControl"] {
     display: none !important;
 }
-section[data-testid="stSidebar"] [data-testid="stSidebarCollapseButton"] {
+
+/* ===========================================================
+   DESKTOP CENTERING FIX
+   ===========================================================
+   The app no longer uses st.sidebar anywhere — navigation moved to
+   the header avatar/popover (render_header). But Streamlit still
+   mounts an empty section[data-testid="stSidebar"] element in the
+   DOM by default, and the old sidebar-nav-era rules below were
+   forcing that empty sidebar to permanently reserve 280px of real
+   width (min-width/max-width/width: 280px !important) AND hiding the
+   only control that could collapse it (collapsedControl above).
+   Net effect: the main content area's available width was always
+   "viewport minus 280px", so anything centered inside it (like
+   .st-key-home_center_wrap below) ended up visually off-center
+   relative to the FULL browser window — small/invisible gap on the
+   left (where the empty sidebar sits), a much bigger gap on the
+   right. Barely noticeable on a laptop, obvious on a wide monitor.
+   Fix: since the sidebar is unused, hide it completely instead of
+   just hiding its collapse button. That gives the main content area
+   the full viewport width back, so centering works correctly at any
+   screen size. The width-forcing rules further down (kept below,
+   commented out) are now dead code once this is in place, but left
+   in place (inert) in case a real st.sidebar nav is reintroduced later. */
+section[data-testid="stSidebar"] {
     display: none !important;
 }
-section[data-testid="stSidebar"] button[kind="header"] {
-    display: none !important;
+/* Hiding the sidebar child alone isn't enough: Streamlit's parent
+   container lays sidebar + main out as a grid/flex with a track
+   reserved for the sidebar, set via inline style/CSS var independent
+   of whether the sidebar itself is visible. Hiding just the child
+   leaves that track's space empty instead of collapsing it — which is
+   exactly the leftover left-side gap seen in testing. Forcing the
+   parent to a single full-width column, and the main pane to 100%
+   width/no offset, reclaims that space for real. */
+[data-testid="stAppViewContainer"] {
+    grid-template-columns: 1fr !important;
 }
-[data-testid="stSidebarResizeHandle"] {
-    display: none !important;
+[data-testid="stMain"] {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin-left: 0 !important;
+    transform: none !important;
+    flex: 1 1 100% !important;
 }
 
 section[data-testid="stSidebar"] {
@@ -79,6 +114,15 @@ section[data-testid="stSidebar"] {
 section[data-testid="stSidebar"] > div {
     padding-top: 1.6rem;
     transition: opacity 0.2s ease;
+}
+section[data-testid="stSidebar"] [data-testid="stSidebarCollapseButton"] {
+    display: none !important;
+}
+section[data-testid="stSidebar"] button[kind="header"] {
+    display: none !important;
+}
+[data-testid="stSidebarResizeHandle"] {
+    display: none !important;
 }
 
 .st-key-sidebar_expand_btn button,
@@ -461,6 +505,20 @@ section[data-testid="stSidebar"] .st-key-sidebar_expand_btn button {
 .st-key-claim_shell {
     width: 100%;
     max-width: 880px;
+    /* FIX: the parent (.st-key-home_center_wrap) is flex column with
+       align-items:center, which should center this box — but
+       Streamlit wraps every st.container(key=...) in its own extra
+       full-width block-level divs. If any of those in-between
+       wrapper divs isn't itself a proper flex item (or resets to
+       block display), align-items:center on the outer flex parent
+       never reaches this box, and it just sits left-aligned inside
+       a full-width wrapper instead of being centered — most visible
+       on very wide screens where the gap between max-width:880px and
+       the full available width is large. margin:0 auto centers it
+       directly, independent of whatever the parent's display mode
+       ends up being. */
+    margin: 0 auto;
+    box-sizing: border-box;
 }
 
 .fnd-static-pill-row {
@@ -750,16 +808,6 @@ a.fnd-source-link {
     cursor: pointer;
     word-break: break-all;
     overflow-wrap: anywhere;
-    /* MOBILE FIX (tap not registering, only long-press works): explicitly
-       telling the browser this element is meant for direct
-       tap/manipulation (not a scroll/pan surface) stops some mobile
-       browsers from swallowing the tap as part of Streamlit's own
-       touch/scroll gesture handling on the page. Also forces a visible
-       tap flash so a successful tap is obvious, and guarantees this
-       specific element is never accidentally excluded from the hit-test
-       by an inherited pointer-events value. Padding widens the actual
-       tappable box beyond just the text glyphs (small text is an easy
-       mis-tap target on a phone). */
     touch-action: manipulation;
     -webkit-tap-highlight-color: rgba(139, 92, 246, 0.35);
     -webkit-touch-callout: default;
@@ -772,12 +820,6 @@ a.fnd-source-link:hover {
     color: #c4b5fd;
     text-decoration: underline;
 }
-/* MOBILE FIX (companion rule): the row and its icon/body wrapper must
-   not themselves end up sitting visually "on top of" the link at the
-   exact pixel the finger lands on. Nothing here was styled with a
-   competing absolutely-positioned layer, but pinning these to
-   pointer-events:auto too removes any ambiguity for the browser's
-   touch hit-test across the whole row, not just the anchor itself. */
 .fnd-source-row,
 .fnd-source-body {
     pointer-events: auto;
@@ -805,12 +847,6 @@ a.fnd-source-link:hover {
     animation: fndFadeUp 0.35s ease-out both;
 }
 
-/* MATCH FIX: st.download_button ("Download PDF") sat next to the
-   custom View Report button (rendered via components.html) but looked
-   noticeably smaller/boxier — Streamlit's own button padding/height
-   defaults don't line up with a plain custom HTML button by default.
-   Forcing the same height, border-radius and font-size here makes the
-   pair read as one matched set of two equal-size buttons. */
 .st-key-download_pdf_results button,
 .st-key-download_pdf_history button {
     width: 170px !important;
@@ -868,17 +904,8 @@ a.fnd-source-link:hover {
 }
 
 /* ===========================================================
-   NEW: Large monitor breakpoint (1400px and wider)
-   ===========================================================
-   Only .st-key-home_center_wrap's max-width changes here — every
-   other rule (cards, buttons, spacing) is left completely alone, so
-   nothing about the *look* of individual elements changes, only how
-   much total width the centered home-page content is allowed to use.
-   This makes big external monitors feel less "an island in a sea of
-   empty space" without ever going edge-to-edge (which would make
-   the hero text/paragraph uncomfortably wide to read). 1180px (the
-   original) still applies on anything narrower than 1400px, i.e.
-   every normal laptop screen is completely unaffected. */
+   Large monitor breakpoint (1400px and wider)
+   =========================================================== */
 @media (min-width: 1400px) {
     .st-key-home_center_wrap {
         max-width: 1400px;
@@ -886,34 +913,9 @@ a.fnd-source-link:hover {
 }
 
 /* ===========================================================
-   NEW: Tablet breakpoint (641px – 1024px)
-   ===========================================================
-   Previously there was a big gap between the mobile fixes below
-   (<=640px) and the desktop-oriented default styles above — so an
-   iPad-ish/tablet-width screen (and some small laptops) got the full
-   desktop hero font-size/padding with none of the mobile
-   space-saving tweaks, and none of the width-safety tweaks either.
-   This section only trims font sizes and horizontal padding a bit
-   (nothing structural, no layout/flex-direction changes) so text and
-   spacing feel proportional at these in-between widths, while still
-   keeping the same side-by-side layouts (pills row, verdict +
-   confidence ring, Clear/Check Now row) that desktop uses — those
-   already fit fine at 641px+, they just don't need full desktop-size
-   text and padding. */
+   Tablet breakpoint (641px – 1024px)
+   =========================================================== */
 @media (min-width: 641px) and (max-width: 1024px) {
-    /* FIX: on tablet-height screens (e.g. iPad, 768x1024) the home
-       page's content (heading + textarea + pills + buttons + note) is
-       shorter than the viewport, so it all sat pinned to the top with
-       a large empty gap below it. min-height + justify-content:center
-       vertically centers that content in the available viewport space
-       instead, splitting the empty space evenly above/below rather
-       than dumping all of it at the bottom. Scoped to ONLY this
-       min-width:641px/max-width:1024px breakpoint, so phones (<=640px)
-       and laptops/monitors (>1024px) are completely unaffected — this
-       rule simply doesn't exist outside this range. `100px` is a rough
-       allowance for the top header bar above .st-key-home_center_wrap;
-       if content is ever taller than the viewport it just scrolls
-       normally, nothing gets clipped. */
     .st-key-home_center_wrap {
         min-height: calc(100vh - 100px);
         justify-content: center;
@@ -949,22 +951,8 @@ a.fnd-source-link:hover {
 }
 
 /* ===========================================================
-   NEW: Landscape tablets (e.g. iPad Pro landscape, ~1366x1024)
-   ===========================================================
-   The portrait-tablet breakpoint above only covers up to
-   max-width:1024px, but a tablet rotated to landscape reports a
-   WIDER viewport (e.g. 1366px) that falls outside that range and
-   into "normal desktop" territory instead — so it never got the
-   vertical-centering fix. The problem: a common laptop resolution is
-   ALSO 1366px wide (at ~768px tall), and that combination should NOT
-   be centered (laptops already look fine top-aligned, per earlier
-   testing). The fix distinguishes the two using height, not just
-   width: landscape tablets are relatively tall for their width
-   (~1024px tall), while 1366-wide laptops are comparatively short
-   (~768px tall). Requiring min-height:900px alongside the width range
-   means this rule only ever fires for that taller landscape-tablet
-   shape, leaving every normal 1366x768-ish laptop screen completely
-   untouched. */
+   Landscape tablets (e.g. iPad Pro landscape, ~1366x1024)
+   =========================================================== */
 @media (min-width: 1025px) and (max-width: 1400px) and (min-height: 900px) {
     .st-key-home_center_wrap {
         min-height: calc(100vh - 100px);
@@ -973,6 +961,11 @@ a.fnd-source-link:hover {
 }
 
 @media (max-width: 640px) {
+
+    .st-key-home_center_wrap {
+        min-height: calc(100vh - 90px);
+        justify-content: center;
+    }
 
     .st-key-app_header_bar [data-testid="stHorizontalBlock"] {
         flex-wrap: nowrap !important;
@@ -1056,12 +1049,6 @@ a.fnd-source-link:hover {
         margin-bottom: 0.2rem;
     }
 
-    /* --- Fix 5: verdict card + confidence ring stacking / ending up
-       unequal sizes instead of sitting neatly side-by-side ---
-       `:has(.fnd-verdict-card)` finds whichever
-       [data-testid="stHorizontalBlock"] actually contains the verdict
-       card, on ANY page, so this applies everywhere the pair is
-       rendered (results page AND history-detail page alike). */
     [data-testid="stHorizontalBlock"]:has(.fnd-verdict-card),
     .st-key-results_top_row [data-testid="stHorizontalBlock"] {
         flex-wrap: nowrap !important;
@@ -1099,21 +1086,6 @@ a.fnd-source-link:hover {
         box-sizing: border-box !important;
     }
 
-    /* FIX (v4): the previous version used `overflow: hidden` together
-       with a rigid `height: 135px`. On the history-detail page the
-       actual rendered content (icon + "VERDICT" + "TRUE" + badge, or
-       ring + date/sources line) was very slightly taller than 135px,
-       so overflow:hidden silently CUT OFF most of the box instead of
-       showing it — that's what made the cards look empty/collapsed.
-       Removing overflow:hidden and switching from a fixed `height` to
-       `min-height` + `height: 100%` fixes this two ways at once:
-       content is never clipped again, AND both cards still end up
-       exactly the same height as each other, because `height: 100%`
-       makes each card fill its own column, and the column row above
-       has `align-items: stretch` — so both columns (and therefore
-       both cards) automatically match whichever one is naturally
-       tallest, with `min-height: 135px` as a floor so they never look
-       too short either. */
     .fnd-verdict-card,
     .fnd-ring-card {
         box-sizing: border-box;
@@ -1124,10 +1096,6 @@ a.fnd-source-link:hover {
         border: 1px solid #23232f !important;
     }
 
-    /* `width: 100%` (not a fixed px width) makes each card fill its
-       own 50%-width column exactly, so both boxes are always
-       identically sized and aligned no matter the exact viewport
-       width. Nothing rendered *inside* either card changes. */
     .fnd-verdict-card {
         flex: 1 1 0 !important;
         width: 100% !important;
@@ -1155,11 +1123,6 @@ a.fnd-source-link:hover {
         padding: 0.2rem 0.55rem;
     }
 
-    /* Same fix mirrored on the ring card: width:100% + height:100%
-       instead of a fixed 135px box, so it fills its column exactly
-       and matches the verdict card's box exactly — same width, same
-       (stretched, equal) height, same alignment, content never
-       clipped. */
     .fnd-ring-card {
         flex: 1 1 0 !important;
         width: 100% !important;
