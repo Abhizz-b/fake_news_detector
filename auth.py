@@ -326,7 +326,7 @@ def register(username: str, password: str, confirm_password: str) -> tuple[bool,
 
 
 # ===========================================================================
-# ---- UI: CSS (card, icon badge, gradient button, responsive) ----
+# ---- UI: CSS (card, gradient button, responsive) ----
 # ===========================================================================
 
 def _inject_auth_css():
@@ -336,6 +336,22 @@ def _inject_auth_css():
     to restyle native widgets (form inputs, buttons) so we don't need
     a JS component (same reasoning as the cookie->URL-token switch:
     fewer moving parts on Streamlit Cloud = fewer race conditions).
+
+    FIX (this version): removed the username/password "icon inside
+    input" feature entirely. It relied on a JS MutationObserver
+    tagging each stTextInput wrapper by matching its <label> text,
+    then an absolutely-positioned ::before pseudo-element drawing the
+    icon glyph at a hardcoded `top: 2.5rem` offset. In practice the
+    icon frequently failed to render (label text mismatch, timing,
+    or the hardcoded top offset missing the input depending on label
+    font-size/line-height) - but the input still kept its
+    `padding-left: 2.4rem` reserved for that never-drawn icon. That
+    reserved-but-empty space is exactly the "kaafi space aa raha hai"
+    gap between the input's left edge and the typed text. Since the
+    icon was purely decorative and unreliable, the fix is to drop it
+    rather than keep patching JS timing - same "stop fighting fragile
+    DOM/JS, use the simplest reliable thing" rule as elsewhere in this
+    file. Inputs now use a normal, small left padding.
     """
     st.markdown(
         """
@@ -350,7 +366,7 @@ def _inject_auth_css():
         }
 
         /* ---------- global reset: kill the scroll causes ---------- */
-        /* box-sizing guard: without this, input padding-left (2.4rem)
+        /* box-sizing guard: without this, input padding-left
            gets ADDED to width instead of eating into it, which is what
            was pushing content past the viewport and forcing a
            horizontal scrollbar on phones. */
@@ -439,34 +455,14 @@ def _inject_auth_css():
             width: 100% !important;
         }
 
-        /* ROOT FIX for the button-centering bug (v2 - flexbox, not
-           position math):
-           The old rule used position:relative + left:50% +
-           transform:translateX(-50%) on the BUTTON itself. That only
-           works if left/transform stay in sync with the button's
-           CURRENT computed width every time the width changes (e.g.
-           the mobile media query below switching it to width:100%).
-           Since only `width` was overridden inside the media query
-           and left/transform were left untouched, the 50%/-50% math
-           kept being computed against a stale width -> visible
-           pixel-level left shift on mobile, which is exactly the bug
-           in the screenshots.
-
-           Fix: drop position math entirely. Make the WRAPPER
-           (div[data-testid="stButton"]) a flex container with
-           justify-content:center. A flex parent centers a child of
-           ANY width with zero math - this is true whether the button
-           ends up 200px wide (desktop/tablet) or 100% wide (mobile),
-           so the two states below not only can't drift out of sync,
-           there's no sync to maintain in the first place. */
         /* Note: horizontal centering/width for the "Register a new
-           account" / "Back to login" buttons is now handled entirely
-           by st.columns([1, 2, 1]) + use_container_width=True in the
+           account" / "Back to login" buttons is handled entirely by
+           st.columns([1, 2, 1]) + use_container_width=True in the
            Python code, NOT by CSS - see show_login_form() /
            show_register_form(). That's a Streamlit layout primitive,
            immune to data-testid/DOM changes across Streamlit
-           versions, unlike position/flex tricks here. This CSS block
-           only handles colors/border - it deliberately does NOT set
+           versions, unlike position/flex tricks. This CSS block only
+           handles colors/border - it deliberately does NOT set
            width/max-width/margin so it can never fight with
            use_container_width for control of the button's size.*/
         div[data-testid="stButton"] button {
@@ -502,9 +498,8 @@ def _inject_auth_css():
             filter: brightness(1.08);
         }
 
-        /* ---------- input icons ---------- */
+        /* ---------- inputs (icon removed - see docstring above) ---------- */
         div[data-testid="stTextInput"] {
-            position: relative;
             width: 100%;
         }
         div[data-testid="stTextInput"] input {
@@ -512,24 +507,13 @@ def _inject_auth_css():
             border: 1px solid var(--auth-card-border) !important;
             border-radius: 10px !important;
             color: #fff !important;
-            padding-left: 2.4rem !important;
+            padding-left: 1rem !important;
             height: 2.9rem !important;
             width: 100% !important;
         }
         div[data-testid="stTextInput"] input::placeholder {
             color: rgba(255,255,255,0.35) !important;
         }
-        div[data-testid="stTextInput"]::before {
-            position: absolute;
-            left: 0.9rem;
-            top: 2.5rem;
-            font-size: 1rem;
-            opacity: 0.6;
-            z-index: 2;
-            pointer-events: none;
-        }
-        div[data-testid="stTextInput"].auth-field-user::before { content: "👤"; }
-        div[data-testid="stTextInput"].auth-field-pass::before { content: "🔒"; }
 
         /* ---------- header: icon badge + title + subtitle ---------- */
         .auth-header {
@@ -689,65 +673,6 @@ def _auth_footer():
     pass
 
 
-def _tag_field_icons():
-    """
-    Runs a tiny bit of JS to tag the username/password stTextInput
-    wrapper divs with a class (auth-field-user / auth-field-pass) so
-    the CSS above can attach the right icon. Matches purely on the
-    visible label text, so it stays correct even if Streamlit changes
-    internal DOM structure elsewhere.
-
-    Uses a MutationObserver (instead of fixed setTimeout delays) so
-    tagging isn't a timing gamble - on mobile/slower renders the fixed
-    150ms/500ms delays could fire before the fields existed, which is
-    why the icons sometimes silently never showed up. The observer
-    reacts the instant the fields actually appear in the DOM, and
-    disconnects once both fields on the page are tagged.
-    """
-    st.markdown(
-        """
-        <script>
-        (function() {
-            const tagFields = () => {
-                const doc = window.parent.document;
-                const wrappers = doc.querySelectorAll('div[data-testid="stTextInput"]');
-                let allTagged = wrappers.length > 0;
-                wrappers.forEach((w) => {
-                    const label = w.querySelector('label');
-                    if (!label) { allTagged = false; return; }
-                    const text = label.innerText.trim().toLowerCase();
-                    if (text === "username") {
-                        w.classList.add("auth-field-user");
-                    } else if (text === "password" || text === "confirm password") {
-                        w.classList.add("auth-field-pass");
-                    } else {
-                        allTagged = false;
-                    }
-                });
-                return allTagged;
-            };
-
-            // Try immediately in case fields are already there.
-            if (tagFields()) return;
-
-            const doc = window.parent.document;
-            const observer = new MutationObserver(() => {
-                if (tagFields()) {
-                    observer.disconnect();
-                }
-            });
-            observer.observe(doc.body, { childList: true, subtree: true });
-
-            // Safety net: stop observing after 5s no matter what, so we
-            // never leak an observer if something unexpected happens.
-            setTimeout(() => observer.disconnect(), 5000);
-        })();
-        </script>
-        """,
-        unsafe_allow_html=True,
-    )
-
-
 # ===========================================================================
 # ---- UI: forms (same logic calls as before, new markup around them) ----
 # ===========================================================================
@@ -799,8 +724,6 @@ def show_login_form():
             st.session_state.auth_page = 'register'
             st.rerun()
 
-    _tag_field_icons()
-
 
 def show_register_form():
     """
@@ -839,8 +762,6 @@ def show_register_form():
         if st.button("Back to login", use_container_width=True):
             st.session_state.auth_page = 'login'
             st.rerun()
-
-    _tag_field_icons()
 
 
 def show_auth_ui():
