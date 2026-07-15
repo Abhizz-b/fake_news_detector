@@ -55,7 +55,7 @@ Every AI service runs on a free-tier cloud API — no local models, no GPU, noth
 
 ## Running Locally
 
-Want to run your own copy instead of using the live demo? You'll need your own free API keys.
+Want to run your own copy instead of using the live demo? in that case You'll need your own free API keys.
 
 **Prerequisites:** Python 3.12+, a free [Groq API key](https://console.groq.com), and a free [Gemini API key](https://aistudio.google.com)
 
