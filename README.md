@@ -32,7 +32,7 @@ Input can be in English, Japanese, Korean, or Chinese the output is always norma
 - ✅ **Semantic matching** — uses embeddings, so it understands meaning, not just keyword overlap
 - ✅ **Fact-check history** — every check is saved to your account, revisit anytime
 - ✅ **PDF export** — download a shareable report of any fact check
-- ✅ **Multi-language input** — auto-detects and normalizes non-English input
+- ✅ **Multi-language input** — auto-detects and normalizes non English input
 - ✅ **Secure multi-user auth** — salted password hashing, no shared accounts
 
 ---
